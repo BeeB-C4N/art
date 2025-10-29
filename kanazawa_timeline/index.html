@@ -112,6 +112,9 @@
             font-size: 1.8rem;
             color: white;
         }
+        
+        /* ★★ 修正点 ★★ */
+        /* アイコンの色分けは維持 */
         .cd-timeline__img--picture {
             /* 政治・経済 (デフォルト) */
             background: #6f9fbf; /* 金沢の伝統色: 藍色系 */
@@ -131,11 +134,9 @@
                 height: 60px;
                 left: 50%;
                 margin-left: -30px;
-                /* アニメーションのための設定 */
                 -webkit-transform: translateZ(0);
                 -webkit-backface-visibility: hidden;
             }
-            /* アニメーション用クラス */
             .cd-timeline__img.is-hidden {
                 visibility: hidden;
             }
@@ -148,55 +149,19 @@
         }
 
         @-webkit-keyframes cd-bounce-1 {
-            0% {
-                opacity: 0;
-                -webkit-transform: scale(0.5);
-            }
-            60% {
-                opacity: 1;
-                -webkit-transform: scale(1.2);
-            }
-            100% {
-                -webkit-transform: scale(1);
-            }
+            0% { opacity: 0; -webkit-transform: scale(0.5); }
+            60% { opacity: 1; -webkit-transform: scale(1.2); }
+            100% { -webkit-transform: scale(1); }
         }
         @-moz-keyframes cd-bounce-1 {
-            0% {
-                opacity: 0;
-                -moz-transform: scale(0.5);
-            }
-            60% {
-                opacity: 1;
-                -moz-transform: scale(1.2);
-            }
-            100% {
-                -moz-transform: scale(1);
-            }
+            0% { opacity: 0; -moz-transform: scale(0.5); }
+            60% { opacity: 1; -moz-transform: scale(1.2); }
+            100% { -moz-transform: scale(1); }
         }
         @keyframes cd-bounce-1 {
-            0% {
-                opacity: 0;
-                -webkit-transform: scale(0.5);
-                -moz-transform: scale(0.5);
-                -ms-transform: scale(0.5);
-                -o-transform: scale(0.5);
-                transform: scale(0.5);
-            }
-            60% {
-                opacity: 1;
-                -webkit-transform: scale(1.2);
-                -moz-transform: scale(1.2);
-                -ms-transform: scale(1.2);
-                -o-transform: scale(1.2);
-                transform: scale(1.2);
-            }
-            100% {
-                -webkit-transform: scale(1);
-                -moz-transform: scale(1);
-                -ms-transform: scale(1);
-                -o-transform: scale(1);
-                transform: scale(1);
-            }
+            0% { opacity: 0; transform: scale(0.5); }
+            60% { opacity: 1; transform: scale(1.2); }
+            100% { transform: scale(1); }
         }
 
         .cd-timeline__content {
@@ -218,21 +183,11 @@
             color: #333;
             margin-bottom: 0.5em;
         }
-        .cd-timeline__content p, .cd-timeline__content .cd-timeline__read-more {
+        .cd-timeline__content p {
             font-size: 1.4rem;
             line-height: 1.6;
             color: #555;
             margin-bottom: 0.5em;
-        }
-        .cd-timeline__content .cd-timeline__read-more {
-            float: right;
-            padding: .8em 1em;
-            background: #acb7c0;
-            color: white;
-            border-radius: 0.25em;
-        }
-        .cd-timeline__content .cd-timeline__read-more:hover {
-            background-color: #bac5cd;
         }
         .cd-timeline__content .cd-timeline__date {
             display: inline-block;
@@ -248,7 +203,6 @@
             margin-top: 1em;
             font-style: italic;
         }
-
         .cd-timeline__content::before {
             /* コンテンツボックスの矢印 */
             content: '';
@@ -260,6 +214,7 @@
             border: 7px solid transparent;
             border-right: 7px solid white;
         }
+        
         @media only screen and (min-width: 768px) {
             .cd-timeline__content h2 {
                 font-size: 2.2rem;
@@ -276,8 +231,7 @@
             .cd-timeline__content {
                 margin-left: 0;
                 padding: 2em;
-                width: 45%;
-                /* アニメーションのための設定 */
+                width: 45%; /* これでPC表示では左側45%の幅になる */
                 -webkit-transform: translateZ(0);
                 -webkit-backface-visibility: hidden;
             }
@@ -294,33 +248,13 @@
                 top: 18px;
                 font-size: 1.8rem;
                 font-weight: 700;
-                text-align: right;
+                text-align: right; /* 日付は右側に表示 */
             }
-            
-            /* --- カスタマイズ：ここから --- */
             
             /* ★★ 修正点 ★★ */
-            /* .timeline-left の float: left; を削除 */
-            /* デフォルト (width: 45%) で左側に配置されるため、スタイル指定は不要 */
-
-
-            /* '社会・文化' (timeline-right) は右側に配置 */
-            .cd-timeline__block.timeline-right .cd-timeline__content {
-                float: right;
-            }
-            .cd-timeline__block.timeline-right .cd-timeline__content::before {
-                top: 24px;
-                left: auto;
-                right: 100%;
-                border-color: transparent;
-                border-right: 7px solid white;
-            }
-            .cd-timeline__block.timeline-right .cd-timeline__content .cd-timeline__date {
-                left: auto;
-                right: 122%;
-                text-align: left;
-            }
-            /* --- カスタマイズ：ここまで --- */
+            /* 左右振り分け (timeline-right や nth-child(even)) の
+               カスタムスタイルをすべて削除しました。
+               これにより、すべてのブロックがデフォルトの左側配置になります。 */
 
             /* アニメーション用クラス */
             .cd-timeline__content.is-hidden {
@@ -335,117 +269,24 @@
         }
 
         @-webkit-keyframes cd-bounce-2 {
-            0% {
-                opacity: 0;
-                -webkit-transform: translateX(-100px);
-            }
-            60% {
-                opacity: 1;
-                -webkit-transform: translateX(20px);
-            }
-            100% {
-                -webkit-transform: translateX(0);
-            }
+            0% { opacity: 0; -webkit-transform: translateX(-100px); }
+            60% { opacity: 1; -webkit-transform: translateX(20px); }
+            100% { -webkit-transform: translateX(0); }
         }
         @-moz-keyframes cd-bounce-2 {
-            0% {
-                opacity: 0;
-                -moz-transform: translateX(-100px);
-            }
-            60% {
-                opacity: 1;
-                -moz-transform: translateX(20px);
-            }
-            100% {
-                -moz-transform: translateX(0);
-            }
+            0% { opacity: 0; -moz-transform: translateX(-100px); }
+            60% { opacity: 1; -moz-transform: translateX(20px); }
+            100% { -moz-transform: translateX(0); }
         }
         @keyframes cd-bounce-2 {
-            0% {
-                opacity: 0;
-                -webkit-transform: translateX(-100px);
-                -moz-transform: translateX(-100px);
-                -ms-transform: translateX(-100px);
-                -o-transform: translateX(-100px);
-                transform: translateX(-100px);
-            }
-            60% {
-                opacity: 1;
-                -webkit-transform: translateX(20px);
-                -moz-transform: translateX(20px);
-                -ms-transform: translateX(20px);
-                -o-transform: translateX(20px);
-                transform: translateX(20px);
-            }
-            100% {
-                -webkit-transform: translateX(0);
-                -moz-transform: translateX(0);
-                -ms-transform: translateX(0);
-                -o-transform: translateX(0);
-                transform: translateX(0);
-            }
+            0% { opacity: 0; transform: translateX(-100px); }
+            60% { opacity: 1; transform: translateX(20px); }
+            100% { transform: translateX(0); }
         }
         
-        /* 右側コンテンツのアニメーション (bounce-in) */
-        @media only screen and (min-width: 1170px) {
-            .cd-timeline__block.timeline-right .cd-timeline__content.bounce-in {
-                -webkit-animation: cd-bounce-2-inverse 0.6s;
-                -moz-animation: cd-bounce-2-inverse 0.6s;
-                animation: cd-bounce-2-inverse 0.6s;
-            }
-        }
-
-        @-webkit-keyframes cd-bounce-2-inverse {
-            0% {
-                opacity: 0;
-                -webkit-transform: translateX(100px);
-            }
-            60% {
-                opacity: 1;
-                -webkit-transform: translateX(-20px);
-            }
-            100% {
-                -webkit-transform: translateX(0);
-            }
-        }
-        @-moz-keyframes cd-bounce-2-inverse {
-            0% {
-                opacity: 0;
-                -moz-transform: translateX(100px);
-            }
-            60% {
-                opacity: 1;
-                -moz-transform: translateX(-20px);
-            }
-            100% {
-                -moz-transform: translateX(0);
-            }
-        }
-        @keyframes cd-bounce-2-inverse {
-            0% {
-                opacity: 0;
-                -webkit-transform: translateX(100px);
-                -moz-transform: translateX(100px);
-                -ms-transform: translateX(100px);
-                -o-transform: translateX(100px);
-                transform: translateX(100px);
-            }
-            60% {
-                opacity: 1;
-                -webkit-transform: translateX(-20px);
-                -moz-transform: translateX(-20px);
-                -ms-transform: translateX(-20px);
-                -o-transform: translateX(-20px);
-                transform: translateX(-20px);
-            }
-            100% {
-                -webkit-transform: translateX(0);
-                -moz-transform: translateX(0);
-                -ms-transform: translateX(0);
-                -o-transform: translateX(0);
-                transform: translateX(0);
-            }
-        }
+        /* ★★ 修正点 ★★ */
+        /* 右側用のアニメーション (cd-bounce-2-inverse) を削除 (不要なため) */
+        
     </style>
 </head>
 <body>
@@ -483,7 +324,14 @@
                     if (!response.ok) {
                         throw new Error('CSV file not found or failed to load (status: ' + response.status + ')');
                     }
+                    // 文字コードShift_JISに対応 (CSVがSJISの場合)
+                    // const buffer = await response.arrayBuffer();
+                    // const decoder = new TextDecoder('shift_jis');
+                    // const csvText = decoder.decode(buffer);
+                    
+                    // (CSVがUTF-8の場合)
                     const csvText = await response.text();
+
                     console.log("CSV file loaded successfully.");
                     const data = parseCSV(csvText);
                     renderTimeline(data);
@@ -503,20 +351,14 @@
                     const line = lines[i].trim();
                     if (line) {
                         // 事項や出典にカンマが含まれる場合を考慮したパース (簡易的)
-                        // "A,B,"C,D",E" のような形式には対応できませんが、
-                        // 和暦,西暦,月日,分類,事項,出典 の形式で「事項」「出典」のみカンマを含む場合は対応できます。
                         const columns = line.split(',');
                         if (columns.length >= 6) {
-                            // 最後の5列 (和暦,西暦,月日,分類)
                             const wareki = columns[0];
                             const seireki = columns[1];
                             const date = columns[2];
                             const category = columns[3];
-                            
                             // 5列目から最後から2列目までを「事項」として結合
-                            // (もし「事項」にカンマがなければ、columns[4] のみ)
                             const event = columns.slice(4, columns.length - 1).join(',');
-                            
                             // 最後の列を「出典」とする
                             const source = columns[columns.length - 1];
 
@@ -550,15 +392,13 @@
                 data.forEach(item => {
                     
                     // ★★ 修正点 ★★
-                    // blockClass のデフォルトを空文字にする
-                    let blockClass = ''; // デフォルト (左側)
-                    let iconClass = 'cd-timeline__img--picture';
+                    // アイコンクラスとシンボルのみ設定 (左右振り分けクラスは削除)
+                    let iconClass = 'cd-timeline__img--picture'; // デフォルト (政治・経済)
                     let iconSymbol = '🏛️'; 
 
                     const category = item.category.trim();
 
                     if (category === '社会・文化') {
-                        blockClass = 'timeline-right'; // 右側の時だけクラスを付与
                         iconClass = 'cd-timeline__img--movie';
                         iconSymbol = '🖌️'; 
                     } else if (category !== '政治・経済') {
@@ -576,8 +416,10 @@
                         "'": '&#39;'
                     }[match])) : '';
 
+                    // ★★ 修正点 ★★
+                    // .cd-timeline__block に ${blockClass} の挿入を削除
                     const htmlBlock = `
-                        <div class="cd-timeline__block ${blockClass}">
+                        <div class="cd-timeline__block">
                             <div class="cd-timeline__img ${iconClass}">
                                 <span role="img" aria-label="${escapeHTML(category)}">${iconSymbol}</span>
                             </div>
