@@ -1,10 +1,9 @@
-
 <!doctype html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>金沢年表 | Vertical Timeline</title>
+    <title>金沢の年表 | Vertical Timeline</title>
     <!-- Google Fonts (Inter) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
     
@@ -454,7 +453,9 @@
 <body>
     <header style="background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
         <div class="cd-container" style="padding: 1.5em 0;">
-            <h1 style="font-size: 2.8rem; font-weight: 700; color: #333; margin: 0;">金沢年表</h1>
+            <h1 style="font-size: 2.8rem; font-weight: 700; color: #333; margin: 0; text-align: center;">
+                金沢の年表
+            </h1>
         </div>
     </header>
 
@@ -472,7 +473,6 @@
         $(document).ready(function() {
             
             // --- 1. フォールバック用のサンプルデータ ---
-            // (kanazawa_timeline.csv の読み込みに失敗した場合に使用)
             const fallbackCsvData = `和暦,西暦,月日,分類,事項,出典
 明治元年,1868,1月15日,政治・経済,（明治天皇元服、王政復古を各国公使に布告した。）,金沢の百年　明治編
 明治2年,1869,5月18日,社会・文化,（版籍奉還が許可された。）,金沢の百年　明治編
@@ -481,10 +481,8 @@
             // --- 2. CSVデータをフェッチして処理する関数 ---
             async function fetchTimelineData() {
                 try {
-                    // './kanazawa_timeline.csv' を同じディレクトリから読み込む
                     const response = await fetch('./kanazawa_timeline.csv');
                     if (!response.ok) {
-                        // 404エラーなどの場合
                         throw new Error('CSV file not found or failed to load (status: ' + response.status + ')');
                     }
                     const csvText = await response.text();
@@ -492,7 +490,6 @@
                     const data = parseCSV(csvText);
                     renderTimeline(data);
                 } catch (error) {
-                    // ローカルでHTMLを開いた場合や、ファイルがない場合
                     console.warn("Could not fetch CSV file. Using fallback data.", error.message);
                     const data = parseCSV(fallbackCsvData);
                     renderTimeline(data);
@@ -501,20 +498,14 @@
 
             // --- 3. CSVテキストをパースする関数 ---
             function parseCSV(text) {
-                // ★★ 修正点 ★★
-                // '\\n' (文字列の \n) ではなく、 '\n' (実際の改行) で分割します。
-                // また、Windowsの改行コード(\r\n)も考慮し、\rを削除します。
-                const lines = text.replace(/\\r/g, '').split('\\n'); 
+                const lines = text.replace(/\r/g, '').split('\n'); 
                 
                 const data = [];
-                // ヘッダー行 (0番目) をスキップし、1行目から処理
                 for (let i = 1; i < lines.length; i++) {
                     const line = lines[i].trim();
                     if (line) {
-                        // 注意: 事項や出典にカンマが含まれていると、この単純なsplitではズレます。
-                        // 今回のサンプルデータでは問題ないと仮定します。
                         const columns = line.split(','); 
-                        if (columns.length >= 6) { // 列が6列以上あるか確認
+                        if (columns.length >= 6) {
                             data.push({
                                 wareki: columns[0],
                                 seireki: columns[1],
@@ -535,7 +526,7 @@
             // --- 4. パースしたデータからHTMLを生成・描画する関数 ---
             function renderTimeline(data) {
                 const $timeline = $('#cd-timeline');
-                $timeline.empty(); // 既存の内容(ローディングメッセージ含む)をクリア
+                $timeline.empty(); 
 
                 if (data.length === 0) {
                     $timeline.append('<div style="text-align: center; padding: 2em; font-size: 1.6rem; color: #d9534f;">データがありません。CSVファイルが空か、またはパースに失敗しました。</div>');
@@ -543,24 +534,23 @@
                 }
 
                 data.forEach(item => {
-                    let blockClass = 'timeline-left'; // デフォルト (政治・経済, その他)
-                    let iconClass = 'cd-timeline__img--picture'; // 政治・経済
-                    let iconSymbol = '🏛️'; // 政治・経済 (Building)
+                    let blockClass = 'timeline-left'; 
+                    let iconClass = 'cd-timeline__img--picture';
+                    let iconSymbol = '🏛️'; 
 
-                    if (item.category === '社会・文化') {
+                    const category = item.category.trim();
+
+                    if (category === '社会・文化') {
                         blockClass = 'timeline-right';
-                        iconClass = 'cd-timeline__img--movie'; // (CSSでは黄土色)
-                        iconSymbol = '🖌️'; // 社会・文化 (Brush)
-                    } else if (item.category !== '政治・経済') {
-                        iconClass = 'cd-timeline__img--location'; // その他 (CSSではグレー)
-                        iconSymbol = '📍'; // その他 (Pin)
+                        iconClass = 'cd-timeline__img--movie';
+                        iconSymbol = '🖌️'; 
+                    } else if (category !== '政治・経済') {
+                        iconClass = 'cd-timeline__img--location';
+                        iconSymbol = '📍'; 
                     }
 
                     const dateDisplay = `${item.wareki} (${item.seireki}) ${item.date}`;
 
-                    // XSS (クロスサイトスクリプティング) 対策として、
-                    // ユーザーデータをHTMLに挿入する前に簡易的なエスケープ処理を行います。
-                    // (jQueryの.text()を使うのが望ましいですが、ここではテンプレートリテラル内のため手動)
                     const escapeHTML = (str) => str ? str.replace(/[&<>"']/g, match => ({
                         '&': '&amp;',
                         '<': '&lt;',
@@ -569,15 +559,17 @@
                         "'": '&#39;'
                     }[match])) : '';
 
+                    // ★★ 修正点 ★★
+                    // <h2> タグの前の不要な "T" を削除しました。
                     const htmlBlock = `
                         <div class="cd-timeline__block ${blockClass}">
                             <div class="cd-timeline__img ${iconClass}">
-                                <span role="img" aria-label="${escapeHTML(item.category)}">${iconSymbol}</span>
+                                <span role="img" aria-label="${escapeHTML(category)}">${iconSymbol}</span>
                             </div>
 
                             <div class="cd-timeline__content">
                                 <h2>${escapeHTML(item.event)}</h2>
-                                <p>分類: ${escapeHTML(item.category)}</p>
+                                <p>分類: ${escapeHTML(category)}</p>
                                 <span class="cd-timeline__source">出典: ${escapeHTML(item.source)}</span>
                                 <span class="cd-timeline__date">${escapeHTML(dateDisplay)}</span>
                             </div>
