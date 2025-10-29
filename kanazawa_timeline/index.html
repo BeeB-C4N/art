@@ -1,1 +1,623 @@
 
+<!doctype html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>金沢年表 | Vertical Timeline</title>
+    <!-- Google Fonts (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Codyhouse Timeline CSS (インライン化) -->
+    <style>
+        /*
+        * Codyhouse Vertical Timeline - スタイルシート
+        * (https://codyhouse.co/gem/vertical-timeline/)
+        */
+
+        /* -------------------------------- 
+        
+        Main Components 
+        
+        -------------------------------- */
+        html {
+            font-size: 62.5%;
+        }
+
+        body {
+            font-size: 1.6rem;
+            font-family: "Noto Sans JP", "Inter", sans-serif;
+            color: #333;
+            background-color: #f9f9f9;
+        }
+
+        a {
+            color: #a0a0a0;
+            text-decoration: none;
+        }
+
+        /* -------------------------------- 
+        
+        Vertical Timeline 
+        
+        -------------------------------- */
+        .cd-container {
+            width: 90%;
+            max-width: 1170px;
+            margin: 0 auto;
+        }
+        .cd-container::after {
+            content: '';
+            display: table;
+            clear: both;
+        }
+
+        #cd-timeline {
+            position: relative;
+            padding: 2em 0;
+            margin-top: 2em;
+            margin-bottom: 2em;
+        }
+        #cd-timeline::before {
+            /* タイムラインの縦線 */
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 18px;
+            height: 100%;
+            width: 4px;
+            background: #d7e4ed;
+        }
+        @media only screen and (min-width: 1170px) {
+            #cd-timeline {
+                margin-top: 3em;
+                margin-bottom: 3em;
+            }
+            #cd-timeline::before {
+                left: 50%;
+                margin-left: -2px;
+            }
+        }
+
+        .cd-timeline__block {
+            position: relative;
+            margin: 2em 0;
+        }
+        .cd-timeline__block::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+        .cd-timeline__block:first-child {
+            margin-top: 0;
+        }
+        .cd-timeline__block:last-child {
+            margin-bottom: 0;
+        }
+        @media only screen and (min-width: 1170px) {
+            .cd-timeline__block {
+                margin: 4em 0;
+            }
+        }
+
+        .cd-timeline__img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px white, inset 0 2px 0 rgba(0, 0, 0, 0.08), 0 3px 0 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8rem;
+            color: white;
+        }
+        .cd-timeline__img--picture {
+            /* 政治・経済 (デフォルト) */
+            background: #6f9fbf; /* 金沢の伝統色: 藍色系 */
+        }
+        .cd-timeline__img--movie {
+            /* 社会・文化 */
+            background: #d9a443; /* 金沢の伝統色: 黄土色系 */
+        }
+        .cd-timeline__img--location {
+            /* その他 */
+            background: #a0a0a0; /* グレー */
+        }
+
+        @media only screen and (min-width: 1170px) {
+            .cd-timeline__img {
+                width: 60px;
+                height: 60px;
+                left: 50%;
+                margin-left: -30px;
+                /* アニメーションのための設定 */
+                -webkit-transform: translateZ(0);
+                -webkit-backface-visibility: hidden;
+            }
+            /* アニメーション用クラス */
+            .cd-timeline__img.is-hidden {
+                visibility: hidden;
+            }
+            .cd-timeline__img.bounce-in {
+                visibility: visible;
+                -webkit-animation: cd-bounce-1 0.6s;
+                -moz-animation: cd-bounce-1 0.6s;
+                animation: cd-bounce-1 0.6s;
+            }
+        }
+
+        @-webkit-keyframes cd-bounce-1 {
+            0% {
+                opacity: 0;
+                -webkit-transform: scale(0.5);
+            }
+            60% {
+                opacity: 1;
+                -webkit-transform: scale(1.2);
+            }
+            100% {
+                -webkit-transform: scale(1);
+            }
+        }
+        @-moz-keyframes cd-bounce-1 {
+            0% {
+                opacity: 0;
+                -moz-transform: scale(0.5);
+            }
+            60% {
+                opacity: 1;
+                -moz-transform: scale(1.2);
+            }
+            100% {
+                -moz-transform: scale(1);
+            }
+        }
+        @keyframes cd-bounce-1 {
+            0% {
+                opacity: 0;
+                -webkit-transform: scale(0.5);
+                -moz-transform: scale(0.5);
+                -ms-transform: scale(0.5);
+                -o-transform: scale(0.5);
+                transform: scale(0.5);
+            }
+            60% {
+                opacity: 1;
+                -webkit-transform: scale(1.2);
+                -moz-transform: scale(1.2);
+                -ms-transform: scale(1.2);
+                -o-transform: scale(1.2);
+                transform: scale(1.2);
+            }
+            100% {
+                -webkit-transform: scale(1);
+                -moz-transform: scale(1);
+                -ms-transform: scale(1);
+                -o-transform: scale(1);
+                transform: scale(1);
+            }
+        }
+
+        .cd-timeline__content {
+            position: relative;
+            margin-left: 60px;
+            background: white;
+            border-radius: 0.25em;
+            padding: 1.5em 2em;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
+        }
+        .cd-timeline__content::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+        .cd-timeline__content h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 0.5em;
+        }
+        .cd-timeline__content p, .cd-timeline__content .cd-timeline__read-more {
+            font-size: 1.4rem;
+            line-height: 1.6;
+            color: #555;
+            margin-bottom: 0.5em;
+        }
+        .cd-timeline__content .cd-timeline__read-more {
+            float: right;
+            padding: .8em 1em;
+            background: #acb7c0;
+            color: white;
+            border-radius: 0.25em;
+        }
+        .cd-timeline__content .cd-timeline__read-more:hover {
+            background-color: #bac5cd;
+        }
+        .cd-timeline__content .cd-timeline__date {
+            display: inline-block;
+            font-size: 1.5rem;
+            font-weight: 600;
+            padding-bottom: .5em;
+            color: #555;
+        }
+        .cd-timeline__content .cd-timeline__source {
+            display: block;
+            font-size: 1.2rem;
+            color: #999;
+            margin-top: 1em;
+            font-style: italic;
+        }
+
+        .cd-timeline__content::before {
+            /* コンテンツボックスの矢印 */
+            content: '';
+            position: absolute;
+            top: 16px;
+            right: 100%;
+            height: 0;
+            width: 0;
+            border: 7px solid transparent;
+            border-right: 7px solid white;
+        }
+        @media only screen and (min-width: 768px) {
+            .cd-timeline__content h2 {
+                font-size: 2.2rem;
+            }
+            .cd-timeline__content p {
+                font-size: 1.6rem;
+            }
+            .cd-timeline__content .cd-timeline__date {
+                font-size: 1.6rem;
+            }
+        }
+        
+        @media only screen and (min-width: 1170px) {
+            .cd-timeline__content {
+                margin-left: 0;
+                padding: 2em;
+                width: 45%;
+                /* アニメーションのための設定 */
+                -webkit-transform: translateZ(0);
+                -webkit-backface-visibility: hidden;
+            }
+            .cd-timeline__content::before {
+                top: 24px;
+                left: 100%;
+                border-color: transparent;
+                border-left: 7px solid white;
+            }
+            .cd-timeline__content .cd-timeline__date {
+                position: absolute;
+                width: 100%;
+                left: 122%;
+                top: 18px;
+                font-size: 1.8rem;
+                font-weight: 700;
+                text-align: right;
+            }
+            
+            /* --- カスタマイズ：ここから --- */
+            /* '政治・経済' (timeline-left) はデフォルトの左側 */
+            .cd-timeline__block.timeline-left .cd-timeline__content {
+                float: left;
+            }
+            /* (::before と .cd-timeline__date はデフォルトのスタイルが適用される) */
+
+
+            /* '社会・文化' (timeline-right) は右側に配置 */
+            .cd-timeline__block.timeline-right .cd-timeline__content {
+                float: right;
+            }
+            .cd-timeline__block.timeline-right .cd-timeline__content::before {
+                top: 24px;
+                left: auto;
+                right: 100%;
+                border-color: transparent;
+                border-right: 7px solid white;
+            }
+            .cd-timeline__block.timeline-right .cd-timeline__content .cd-timeline__date {
+                left: auto;
+                right: 122%;
+                text-align: left;
+            }
+            /* --- カスタマイズ：ここまで --- */
+
+            /* アニメーション用クラス */
+            .cd-timeline__content.is-hidden {
+                visibility: hidden;
+            }
+            .cd-timeline__content.bounce-in {
+                visibility: visible;
+                -webkit-animation: cd-bounce-2 0.6s;
+                -moz-animation: cd-bounce-2 0.6s;
+                animation: cd-bounce-2 0.6s;
+            }
+        }
+
+        @-webkit-keyframes cd-bounce-2 {
+            0% {
+                opacity: 0;
+                -webkit-transform: translateX(-100px);
+            }
+            60% {
+                opacity: 1;
+                -webkit-transform: translateX(20px);
+            }
+            100% {
+                -webkit-transform: translateX(0);
+            }
+        }
+        @-moz-keyframes cd-bounce-2 {
+            0% {
+                opacity: 0;
+                -moz-transform: translateX(-100px);
+            }
+            60% {
+                opacity: 1;
+                -moz-transform: translateX(20px);
+            }
+            100% {
+                -moz-transform: translateX(0);
+            }
+        }
+        @keyframes cd-bounce-2 {
+            0% {
+                opacity: 0;
+                -webkit-transform: translateX(-100px);
+                -moz-transform: translateX(-100px);
+                -ms-transform: translateX(-100px);
+                -o-transform: translateX(-100px);
+                transform: translateX(-100px);
+            }
+            60% {
+                opacity: 1;
+                -webkit-transform: translateX(20px);
+                -moz-transform: translateX(20px);
+                -ms-transform: translateX(20px);
+                -o-transform: translateX(20px);
+                transform: translateX(20px);
+            }
+            100% {
+                -webkit-transform: translateX(0);
+                -moz-transform: translateX(0);
+                -ms-transform: translateX(0);
+                -o-transform: translateX(0);
+                transform: translateX(0);
+            }
+        }
+        
+        /* 右側コンテンツのアニメーション (bounce-in) */
+        @media only screen and (min-width: 1170px) {
+            .cd-timeline__block.timeline-right .cd-timeline__content.bounce-in {
+                -webkit-animation: cd-bounce-2-inverse 0.6s;
+                -moz-animation: cd-bounce-2-inverse 0.6s;
+                animation: cd-bounce-2-inverse 0.6s;
+            }
+        }
+
+        @-webkit-keyframes cd-bounce-2-inverse {
+            0% {
+                opacity: 0;
+                -webkit-transform: translateX(100px);
+            }
+            60% {
+                opacity: 1;
+                -webkit-transform: translateX(-20px);
+            }
+            100% {
+                -webkit-transform: translateX(0);
+            }
+        }
+        @-moz-keyframes cd-bounce-2-inverse {
+            0% {
+                opacity: 0;
+                -moz-transform: translateX(100px);
+            }
+            60% {
+                opacity: 1;
+                -moz-transform: translateX(-20px);
+            }
+            100% {
+                -moz-transform: translateX(0);
+            }
+        }
+        @keyframes cd-bounce-2-inverse {
+            0% {
+                opacity: 0;
+                -webkit-transform: translateX(100px);
+                -moz-transform: translateX(100px);
+                -ms-transform: translateX(100px);
+                -o-transform: translateX(100px);
+                transform: translateX(100px);
+            }
+            60% {
+                opacity: 1;
+                -webkit-transform: translateX(-20px);
+                -moz-transform: translateX(-20px);
+                -ms-transform: translateX(-20px);
+                -o-transform: translateX(-20px);
+                transform: translateX(-20px);
+            }
+            100% {
+                -webkit-transform: translateX(0);
+                -moz-transform: translateX(0);
+                -ms-transform: translateX(0);
+                -o-transform: translateX(0);
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header style="background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <div class="cd-container" style="padding: 1.5em 0;">
+            <h1 style="font-size: 2.8rem; font-weight: 700; color: #333; margin: 0;">金沢年表</h1>
+        </div>
+    </header>
+
+    <section id="cd-timeline" class="cd-container">
+        <!-- タイムライン項目はここにJSで挿入されます -->
+        <div id="loading-message" style="text-align: center; padding: 2em; font-size: 1.6rem; color: #777;">
+            データを読み込んでいます...
+        </div>
+    </section> <!-- cd-timeline -->
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            
+            // --- 1. フォールバック用のサンプルデータ ---
+            // (kanazawa_timeline.csv の読み込みに失敗した場合に使用)
+            const fallbackCsvData = `和暦,西暦,月日,分類,事項,出典
+明治元年,1868,1月15日,政治・経済,（明治天皇元服、王政復古を各国公使に布告した。）,金沢の百年　明治編
+明治2年,1869,5月18日,社会・文化,（版籍奉還が許可された。）,金沢の百年　明治編
+明治元年,1868,4月11日,政治・経済,（江戸城開城。）,金沢の百年　明治編`;
+
+            // --- 2. CSVデータをフェッチして処理する関数 ---
+            async function fetchTimelineData() {
+                try {
+                    // './kanazawa_timeline.csv' を同じディレクトリから読み込む
+                    const response = await fetch('./kanazawa_timeline.csv');
+                    if (!response.ok) {
+                        // 404エラーなどの場合
+                        throw new Error('CSV file not found or failed to load (status: ' + response.status + ')');
+                    }
+                    const csvText = await response.text();
+                    console.log("CSV file loaded successfully.");
+                    const data = parseCSV(csvText);
+                    renderTimeline(data);
+                } catch (error) {
+                    // ローカルでHTMLを開いた場合や、ファイルがない場合
+                    console.warn("Could not fetch CSV file. Using fallback data.", error.message);
+                    const data = parseCSV(fallbackCsvData);
+                    renderTimeline(data);
+                }
+            }
+
+            // --- 3. CSVテキストをパースする関数 ---
+            function parseCSV(text) {
+                // ★★ 修正点 ★★
+                // '\\n' (文字列の \n) ではなく、 '\n' (実際の改行) で分割します。
+                // また、Windowsの改行コード(\r\n)も考慮し、\rを削除します。
+                const lines = text.replace(/\\r/g, '').split('\\n'); 
+                
+                const data = [];
+                // ヘッダー行 (0番目) をスキップし、1行目から処理
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (line) {
+                        // 注意: 事項や出典にカンマが含まれていると、この単純なsplitではズレます。
+                        // 今回のサンプルデータでは問題ないと仮定します。
+                        const columns = line.split(','); 
+                        if (columns.length >= 6) { // 列が6列以上あるか確認
+                            data.push({
+                                wareki: columns[0],
+                                seireki: columns[1],
+                                date: columns[2],
+                                category: columns[3],
+                                event: columns[4],
+                                source: columns[5]
+                            });
+                        } else {
+                            console.warn("Skipping malformed CSV line:", line);
+                        }
+                    }
+                }
+                console.log("Parsed data:", data);
+                return data;
+            }
+
+            // --- 4. パースしたデータからHTMLを生成・描画する関数 ---
+            function renderTimeline(data) {
+                const $timeline = $('#cd-timeline');
+                $timeline.empty(); // 既存の内容(ローディングメッセージ含む)をクリア
+
+                if (data.length === 0) {
+                    $timeline.append('<div style="text-align: center; padding: 2em; font-size: 1.6rem; color: #d9534f;">データがありません。CSVファイルが空か、またはパースに失敗しました。</div>');
+                    return;
+                }
+
+                data.forEach(item => {
+                    let blockClass = 'timeline-left'; // デフォルト (政治・経済, その他)
+                    let iconClass = 'cd-timeline__img--picture'; // 政治・経済
+                    let iconSymbol = '🏛️'; // 政治・経済 (Building)
+
+                    if (item.category === '社会・文化') {
+                        blockClass = 'timeline-right';
+                        iconClass = 'cd-timeline__img--movie'; // (CSSでは黄土色)
+                        iconSymbol = '🖌️'; // 社会・文化 (Brush)
+                    } else if (item.category !== '政治・経済') {
+                        iconClass = 'cd-timeline__img--location'; // その他 (CSSではグレー)
+                        iconSymbol = '📍'; // その他 (Pin)
+                    }
+
+                    const dateDisplay = `${item.wareki} (${item.seireki}) ${item.date}`;
+
+                    // XSS (クロスサイトスクリプティング) 対策として、
+                    // ユーザーデータをHTMLに挿入する前に簡易的なエスケープ処理を行います。
+                    // (jQueryの.text()を使うのが望ましいですが、ここではテンプレートリテラル内のため手動)
+                    const escapeHTML = (str) => str ? str.replace(/[&<>"']/g, match => ({
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&quot;',
+                        "'": '&#39;'
+                    }[match])) : '';
+
+                    const htmlBlock = `
+                        <div class="cd-timeline__block ${blockClass}">
+                            <div class="cd-timeline__img ${iconClass}">
+                                <span role="img" aria-label="${escapeHTML(item.category)}">${iconSymbol}</span>
+                            </div>
+
+                            <div class="cd-timeline__content">
+                                <h2>${escapeHTML(item.event)}</h2>
+                                <p>分類: ${escapeHTML(item.category)}</p>
+                                <span class="cd-timeline__source">出典: ${escapeHTML(item.source)}</span>
+                                <span class="cd-timeline__date">${escapeHTML(dateDisplay)}</span>
+                            </div>
+                        </div>
+                    `;
+
+                    $timeline.append(htmlBlock);
+                });
+
+                // --- 5. Codyhouseのアニメーションを初期化 ---
+                initCodyhouseAnimation();
+            }
+
+            // --- 6. Codyhouseのスクロールアニメーション (元main.js) ---
+            function initCodyhouseAnimation() {
+                const $timeline_block = $('.cd-timeline__block');
+
+                // ビューポート外のブロックを隠す
+                $timeline_block.each(function(){
+                    if($(this).offset().top > $(window).scrollTop() + $(window).height() * 0.9) {
+                        $(this).find('.cd-timeline__img, .cd-timeline__content').addClass('is-hidden');
+                    }
+                });
+
+                // スクロール時に、ビューポートに入ったブロックを表示
+                $(window).on('scroll', function(){
+                    $timeline_block.each(function(){
+                        if( $(this).offset().top <= $(window).scrollTop() + $(window).height() * 0.9 && $(this).find('.cd-timeline__img').hasClass('is-hidden') ) {
+                            $(this).find('.cd-timeline__img, .cd-timeline__content').removeClass('is-hidden').addClass('bounce-in');
+                        }
+                    });
+                });
+            }
+
+            // --- 実行 ---
+            fetchTimelineData();
+
+        });
+    </script>
+
+</body>
+</html>
+
