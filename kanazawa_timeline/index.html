@@ -11,7 +11,6 @@
     <style>
         /*
         * Codyhouse Vertical Timeline - スタイルシート
-        * (https://codyhouse.co/gem/vertical-timeline/)
         */
 
         /* -------------------------------- 
@@ -299,11 +298,10 @@
             }
             
             /* --- カスタマイズ：ここから --- */
-            /* '政治・経済' (timeline-left) はデフォルトの左側 */
-            .cd-timeline__block.timeline-left .cd-timeline__content {
-                float: left;
-            }
-            /* (::before と .cd-timeline__date はデフォルトのスタイルが適用される) */
+            
+            /* ★★ 修正点 ★★ */
+            /* .timeline-left の float: left; を削除 */
+            /* デフォルト (width: 45%) で左側に配置されるため、スタイル指定は不要 */
 
 
             /* '社会・文化' (timeline-right) は右側に配置 */
@@ -476,7 +474,7 @@
             const fallbackCsvData = `和暦,西暦,月日,分類,事項,出典
 明治元年,1868,1月15日,政治・経済,（明治天皇元服、王政復古を各国公使に布告した。）,金沢の百年　明治編
 明治2年,1869,5月18日,社会・文化,（版籍奉還が許可された。）,金沢の百年　明治編
-明治元年,1868,4月11日,政治・経済,（江戸城開城。）,金沢の百年　明治編`;
+明治元年,1868,4月11日,政治・経済,（江戸城開城。）,金沢の百年_明治編`;
 
             // --- 2. CSVデータをフェッチして処理する関数 ---
             async function fetchTimelineData() {
@@ -504,15 +502,31 @@
                 for (let i = 1; i < lines.length; i++) {
                     const line = lines[i].trim();
                     if (line) {
-                        const columns = line.split(','); 
+                        // 事項や出典にカンマが含まれる場合を考慮したパース (簡易的)
+                        // "A,B,"C,D",E" のような形式には対応できませんが、
+                        // 和暦,西暦,月日,分類,事項,出典 の形式で「事項」「出典」のみカンマを含む場合は対応できます。
+                        const columns = line.split(',');
                         if (columns.length >= 6) {
+                            // 最後の5列 (和暦,西暦,月日,分類)
+                            const wareki = columns[0];
+                            const seireki = columns[1];
+                            const date = columns[2];
+                            const category = columns[3];
+                            
+                            // 5列目から最後から2列目までを「事項」として結合
+                            // (もし「事項」にカンマがなければ、columns[4] のみ)
+                            const event = columns.slice(4, columns.length - 1).join(',');
+                            
+                            // 最後の列を「出典」とする
+                            const source = columns[columns.length - 1];
+
                             data.push({
-                                wareki: columns[0],
-                                seireki: columns[1],
-                                date: columns[2],
-                                category: columns[3],
-                                event: columns[4],
-                                source: columns[5]
+                                wareki: wareki,
+                                seireki: seireki,
+                                date: date,
+                                category: category,
+                                event: event,
+                                source: source
                             });
                         } else {
                             console.warn("Skipping malformed CSV line:", line);
@@ -534,14 +548,17 @@
                 }
 
                 data.forEach(item => {
-                    let blockClass = 'timeline-left'; 
+                    
+                    // ★★ 修正点 ★★
+                    // blockClass のデフォルトを空文字にする
+                    let blockClass = ''; // デフォルト (左側)
                     let iconClass = 'cd-timeline__img--picture';
                     let iconSymbol = '🏛️'; 
 
                     const category = item.category.trim();
 
                     if (category === '社会・文化') {
-                        blockClass = 'timeline-right';
+                        blockClass = 'timeline-right'; // 右側の時だけクラスを付与
                         iconClass = 'cd-timeline__img--movie';
                         iconSymbol = '🖌️'; 
                     } else if (category !== '政治・経済') {
@@ -559,8 +576,6 @@
                         "'": '&#39;'
                     }[match])) : '';
 
-                    // ★★ 修正点 ★★
-                    // <h2> タグの前の不要な "T" を削除しました。
                     const htmlBlock = `
                         <div class="cd-timeline__block ${blockClass}">
                             <div class="cd-timeline__img ${iconClass}">
