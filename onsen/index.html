@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>あなたにピッタリ 温泉診断</title>
+    <!-- Tailwind CSSを読み込み -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 柔らかい雰囲気のためのカスタムスタイル */
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            /* Google FontsからNoto Sans JPを読み込む（Tailwindのデフォルトでも良いが、より日本語に最適化） */
+            @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
+        }
+        
+        /* ボタンのホバーエフェクトを柔らかく */
+        .btn-hover {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .btn-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 質問画面のフェードイン */
+        .page {
+            display: none; /* 初期状態は非表示 */
+        }
+        .page.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* プログレスバーのアニメーション */
+        .progress-bar-inner {
+            transition: width 0.4s ease-out;
+        }
+
+        /* 結果カードのアニメーション */
+        .result-card {
+            animation: popIn 0.5s ease-out;
+            animation-fill-mode: backwards;
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        /* 順位バッジ */
+        .rank-badge {
+            position: absolute;
+            top: -12px;
+            left: -12px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 2px solid white;
+        }
+    </style>
+</head>
+<body class="bg-emerald-50 text-gray-800 min-h-screen">
+
+    <!-- アプリコンテナ -->
+    <div id="app-container" class="max-w-md mx-auto p-4 pt-8">
+
+        <!-- ===== 1. トップページ ===== -->
+        <div id="top-page" class="page active text-center">
+            <!-- メインイラスト (SVGで温泉マーク) -->
+            <div class="flex justify-center mb-6">
+                <svg class="w-24 h-24 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 11.83C14.07 11.83 15.83 10.07 15.83 8C15.83 5.93 14.07 4.17 12 4.17C9.93 4.17 8.17 5.93 8.17 8C8.17 10.07 9.93 11.83 12 11.83Z M8 17.83C8 16.27 9.27 15 10.83 15H13.17C14.73 15 16 16.27 16 17.83V19.83H8V17.83Z M5 14.83C5 13.27 6.27 12 7.83 12H16.17C17.73 12 19 13.27 19 14.83V19.83H5V14.83Z M12 21.83H20V19.83H12V21.83Z M4 21.83H12V19.83H4V21.83Z"></path></svg>
+            </div>
+            
+            <h1 class="text-3xl font-bold text-emerald-800 mb-4">あなたにピッタリ<br>加賀温泉診断</h1>
+            <p class="text-lg text-emerald-700 mb-8">
+                最近のお悩みから、<br>おすすめの加賀温泉をご提案します。
+            </p>
+            <button id="start-btn" class="btn-hover w-full bg-emerald-500 text-white text-xl font-bold py-4 px-6 rounded-full shadow-lg">
+                診断スタート
+            </button>
+        </div>
+
+        <!-- ===== 2. 質問ページ ===== -->
+        <div id="quiz-page" class="page">
+            <!-- プログレスバー -->
+            <div class="mb-6">
+                <div class="text-sm font-bold text-emerald-700 mb-2">
+                    質問 <span id="question-number">1</span> / 10
+                </div>
+                <div class="w-full bg-emerald-200 rounded-full h-3">
+                    <div id="progress-bar" class="progress-bar-inner bg-emerald-500 h-3 rounded-full" style="width: 10%"></div>
+                </div>
+            </div>
+
+            <!-- 質問エリア -->
+            <div class="bg-white p-6 rounded-2xl shadow-md min-h-[150px] flex items-center justify-center mb-8">
+                <h2 id="question-text" class="text-xl font-semibold text-center text-gray-800"></h2>
+            </div>
+
+            <!-- 回答ボタン -->
+            <div id="answer-buttons" class="space-y-4">
+                <button data-answer="yes" class="btn-hover answer-btn w-full bg-emerald-500 text-white text-lg font-bold py-4 rounded-full shadow-md">
+                    はい
+                </button>
+                <button data-answer="no" class="btn-hover answer-btn w-full bg-sky-500 text-white text-lg font-bold py-4 rounded-full shadow-md">
+                    いいえ
+                </button>
+                <button data-answer="neutral" class="btn-hover answer-btn w-full bg-gray-300 text-gray-700 text-lg font-bold py-4 rounded-full shadow-md">
+                    どちらでもない
+                </button>
+            </div>
+        </div>
+
+        <!-- ===== 3. 結果ページ ===== -->
+        <div id="result-page" class="page">
+            <h1 class="text-3xl font-bold text-emerald-800 mb-2 text-center">診断結果</h1>
+            <p class="text-lg text-emerald-700 mb-8 text-center">
+                あなたへのおすすめ温泉
+            </p>
+
+            <!-- ランキングエリア -->
+            <div id="ranking-area" class="space-y-8">
+                <!-- ここにJSで結果が挿入されます -->
+                <!--
+                <div class="result-card bg-white rounded-2xl shadow-lg p-5 relative" style="animation-delay: 0.1s;">
+                    <div class="rank-badge bg-yellow-400">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-emerald-800 pl-10 mb-2">1位: 山代温泉 新第1号源泉</h2>
+                    <p class="text-sm text-gray-500 mb-3">ナトリウム・カリウム―硫酸塩・塩化物温泉</p>
+                    <div class="mb-3">
+                        <span class="text-sm font-bold text-pink-600">あなたへのおすすめ理由:</span>
+                        <p class="text-base text-gray-700 font-semibold">動脈硬化症, きりきず, 慢性皮膚病</p>
+                    </div>
+                    <details class="text-sm">
+                        <summary class="font-semibold text-emerald-700 cursor-pointer">その他の効能を見る</summary>
+                        <p class="text-gray-600 mt-2">
+                            <span class="font-semibold">一般的適応症:</span> 神経痛, 筋肉痛, 関節痛, 五十肩, 運動麻痺, 関節のこわばり, うちみ, くじき, 慢性消化器病, 痔疾, 冷え症, 病後回復期, 疲労回復, 健康増進
+                        </p>
+                    </details>
+                </div>
+                -->
+            </div>
+
+            <button id="restart-btn" class="btn-hover w-full bg-emerald-500 text-white text-xl font-bold py-4 px-6 rounded-full shadow-lg mt-12">
+                もう一度診断する
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 温泉データ ---
+        const onsenData = [
+            {
+                id: 1,
+                name: "山代温泉　新第1号源泉",
+                quality: "ナトリウム・カリウム―硫酸塩・塩化物温泉",
+                generalEffects: ["神経痛", "筋肉痛", "関節痛", "五十肩", "運動麻痺", "関節のこわばり", "うちみ", "くじき", "慢性消化器病", "痔疾", "冷え症", "病後回復期", "疲労回復", "健康増進"],
+                specificEffects: ["動脈硬化症", "きりきず", "やけど", "慢性皮膚病"]
+            },
+            {
+                id: 2,
+                name: "山代3号温泉国立山中病院山代分院源泉",
+                quality: "アルカリ性単純温泉",
+                generalEffects: ["筋肉若しくは関節の慢性的な痛み又はこわばり", "運動麻痺における筋肉のこわばり", "冷え性", "末梢循環障害", "胃腸機能の低下", "軽症高血圧", "耐糖能異常(糖尿病)", "軽い高コレステロール血症", "軽い喘息又は肺気腫", "痔の痛み", "自律神経不安定症", "ストレスによる諸症状(睡眠障害,うつ状態など)", "病後回復期", "疲労回復", "健康増進"],
+                specificEffects: ["自律神経不安定症", "不眠症", "うつ状態"]
+            },
+            {
+                id: 3,
+                name: "山中温泉3号・7号・8号・10号・11号混合泉",
+                quality: "カルシウム・ナトリウム―硫酸塩温泉",
+                generalEffects: ["筋肉若しくは関節の慢性的な痛み又はこわばり", "運動麻痺における筋肉のこわばり", "冷え性", "末梢循環障害", "胃腸機能の低下", "軽症高血圧", "耐糖能異常(糖尿病)", "軽い高コレステロール血症", "軽い喘息又は肺気腫", "痔の痛み", "自律神経不安定症", "ストレスによる諸症状(睡眠障害,うつ状態など)", "病後回復期", "疲労回復", "健康増進"],
+                specificEffects: ["きりきず", "末梢循環障害", "冷え性", "うつ状態", "皮膚乾燥症"]
+            },
+            {
+                id: 4,
+                name: "片山津温泉(2号源泉)",
+                quality: "ナトリウム・カルシウム―塩化物温泉",
+                generalEffects: ["筋肉若しくは関節の慢性的な痛み又はこわばり", "運動麻痺における筋肉のこわばり", "冷え性", "末梢循環障害", "胃腸機能の低下", "軽症高血圧", "耐糖能異常(糖尿病)", "軽い高コレステロール血症", "軽い喘息又は肺気腫", "痔の痛み", "自律神経不安定症", "ストレスによる諸症状(睡眠障害,うつ状態など)", "病後回復期", "疲労回復", "健康増進"],
+                specificEffects: ["きりきず", "末梢循環障害", "冷え性", "うつ状態", "皮膚乾燥症"]
+            }
+        ];
+
+        // --- 質問データ ---
+        // 質問と、関連する効能キーワードのマッピング
+        const questions = [
+            { text: "肩こりや腰痛が気になる？", keywords: ["筋肉痛", "関節痛", "神経痛", "筋肉若しくは関節の慢性的な痛み又はこわばり", "腰痛症"] },
+            { text: "関節がこわばる感じがする？", keywords: ["関節のこわばり", "関節リウマチ", "運動麻痺における筋肉のこわばり"] },
+            { text: "手足が冷えやすい？", keywords: ["冷え性", "末梢循環障害"] },
+            { text: "最近、血圧が高め？", keywords: ["軽症高血圧", "動脈硬化症"] },
+            { text: "お肌が乾燥しがち？", keywords: ["皮膚乾燥症", "慢性皮膚病"] },
+            { text: "ちょっとしたキズが気になる？", keywords: ["きりきず", "やけど"] },
+            { text: "なんだか疲れが取れない？", keywords: ["疲労回復", "病後回復期"] },
+            { text: "夜、ぐっすり眠れない？", keywords: ["不眠症", "睡眠障害", "ストレスによる諸症状(睡眠障害,うつ状態など)"] },
+            { text: "気分が落ち込みがち？", keywords: ["うつ状態", "自律神経不安定症"] },
+            { text: "胃腸の調子がイマイチ？", keywords: ["胃腸機能の低下", "慢性消化器病"] }
+        ];
+
+        // --- アプリケーションの状態 ---
+        let currentQuestionIndex = 0;
+        let userAnswers = {}; // { 0: "yes", 1: "no", ... }
+
+        // --- DOM要素 ---
+        const pages = {
+            top: document.getElementById('top-page'),
+            quiz: document.getElementById('quiz-page'),
+            result: document.getElementById('result-page')
+        };
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const progressBarEl = document.getElementById('progress-bar');
+        const questionTextEl = document.getElementById('question-text');
+        const answerButtonsContainer = document.getElementById('answer-buttons');
+        const rankingAreaEl = document.getElementById('ranking-area');
+
+        // --- 関数 ---
+
+        /** ページを切り替える */
+        function showPage(pageId) {
+            Object.values(pages).forEach(page => page.classList.remove('active'));
+            pages[pageId].classList.add('active');
+            window.scrollTo(0, 0); // ページトップにスクロール
+        }
+
+        /** 診断を開始する */
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            userAnswers = {};
+            showQuestion(currentQuestionIndex);
+            showPage('quiz');
+        }
+
+        /** 質問を表示する */
+        function showQuestion(index) {
+            if (index >= questions.length) {
+                calculateResult();
+                return;
+            }
+            
+            const question = questions[index];
+            questionNumberEl.textContent = index + 1;
+            questionTextEl.textContent = question.text;
+            
+            // プログレスバー更新
+            const progressPercent = ((index + 1) / questions.length) * 100;
+            progressBarEl.style.width = `${progressPercent}%`;
+        }
+
+        /** 回答を処理する */
+        function handleAnswer(event) {
+            const answer = event.target.closest('.answer-btn')?.dataset.answer;
+            if (!answer) return;
+
+            userAnswers[currentQuestionIndex] = answer;
+            currentQuestionIndex++;
+            showQuestion(currentQuestionIndex);
+        }
+
+        /** 結果を計算して表示する */
+        function calculateResult() {
+            let scores = onsenData.map(onsen => ({
+                id: onsen.id,
+                name: onsen.name,
+                quality: onsen.quality,
+                generalEffects: onsen.generalEffects,
+                specificEffects: onsen.specificEffects,
+                score: 0,
+                matchedEffects: [] // マッチした効能を保存
+            }));
+
+            // ユーザーの回答（"yes"のみ）に基づいてスコアを計算
+            for (let i = 0; i < questions.length; i++) {
+                if (userAnswers[i] === 'yes') {
+                    const keywords = questions[i].keywords;
+                    
+                    scores.forEach(onsen => {
+                        const allEffects = [...onsen.generalEffects, ...onsen.specificEffects];
+                        
+                        keywords.forEach(keyword => {
+                            // 効能にキーワードが含まれていたらスコア加算
+                            if (allEffects.some(effect => effect.includes(keyword))) {
+                                onsen.score++;
+                                // マッチした効能を（重複しないように）追加
+                                if (!onsen.matchedEffects.includes(keyword)) {
+                                    // 元データの表現で追加する
+                                    const matchedEffect = allEffects.find(effect => effect.includes(keyword));
+                                    if(matchedEffect && !onsen.matchedEffects.includes(matchedEffect)) {
+                                         onsen.matchedEffects.push(matchedEffect);
+                                    }
+                                }
+                            }
+                        });
+                    });
+                }
+            }
+
+            // スコアに基づいて降順ソート
+            scores.sort((a, b) => b.score - a.score);
+
+            showResult(scores);
+        }
+
+        /** 結果ページを生成して表示する */
+        function showResult(sortedScores) {
+            rankingAreaEl.innerHTML = ''; // 前の結果をクリア
+            
+            const rankColors = ['bg-yellow-400', 'bg-gray-400', 'bg-yellow-600']; // 金、銀、銅
+            const rankIcons = [
+                `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>`,
+                `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>`,
+                `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>`
+            ];
+
+            // 上位3位まで表示（データが4件なので最大3位まで）
+            const topResults = sortedScores.slice(0, 3);
+            
+            topResults.forEach((onsen, index) => {
+                if (onsen.score === 0) return; // スコア0は表示しない
+
+                const animationDelay = index * 0.15;
+                const matchedEffectsHtml = onsen.matchedEffects.length > 0 
+                    ? onsen.matchedEffects.join(', ') 
+                    : '特になし';
+                
+                const allEffectsHtml = [
+                    ...onsen.specificEffects.map(e => `<span class="font-bold">${e}</span>`), // 泉質別を強調
+                    ...onsen.generalEffects
+                ].join(', ');
+                
+                // Google検索用のクエリ（「日帰り入浴」を追加して検索精度を上げます）
+                const searchQuote = encodeURIComponent(onsen.name + " 日帰り入浴");
+
+                const cardHtml = `
+                <div class="result-card bg-white rounded-2xl shadow-lg p-5 pt-8 relative" style="animation-delay: ${animationDelay}s;">
+                    <!-- 順位バッジ -->
+                    <div class="rank-badge ${rankColors[index]}">
+                        ${rankIcons[index]}
+                    </div>
+                    
+                    <!-- バッジの分インデント -->
+                    <div class="pl-10"> 
+                        <h2 class="text-xl font-bold text-emerald-800 mb-2">${index + 1}位: ${onsen.name}</h2>
+                        <p class="text-sm text-gray-500 mb-3">${onsen.quality}</p>
+                        <!-- Google検索ボタンを追加 -->
+                        <a href="https://www.google.com/search?q=${searchQuote}" 
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           class="btn-hover inline-block bg-emerald-100 text-emerald-700 text-sm font-semibold py-2 px-4 rounded-full shadow-sm mb-4 transition-all hover:bg-emerald-200">
+                            どこで入れる？ (Google検索)
+                        </a>
+                    </div>
+                    
+                    <!-- おすすめ理由 -->
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-3">
+                        <span class="text-sm font-bold text-pink-600">あなたへのおすすめ理由:</span>
+                        <p class="text-base text-gray-700 font-semibold">${matchedEffectsHtml}</p>
+                    </div>
+                    
+                    <!-- 効能一覧 -->
+                    <details class="text-sm">
+                        <summary class="font-semibold text-emerald-700 cursor-pointer">主な効能を見る</summary>
+                        <p class="text-gray-600 mt-2 text-xs leading-relaxed">
+                            ${allEffectsHtml}
+                        </p>
+                    </details>
+                </div>
+                `;
+                rankingAreaEl.innerHTML += cardHtml;
+            });
+
+            // マッチするものがなかった場合
+            if (rankingAreaEl.innerHTML === '') {
+                rankingAreaEl.innerHTML = `
+                <div class="result-card bg-white rounded-2xl shadow-lg p-5 text-center">
+                    <p class="text-lg text-gray-700">今回はあなたにピッタリの温泉が<br>見つかりませんでした。</p>
+                </div>
+                `;
+            }
+
+            showPage('result');
+        }
+
+        /** 診断をリスタートする */
+        function restartQuiz() {
+            showPage('top');
+        }
+
+        // --- イベントリスナー ---
+        startBtn.addEventListener('click', startQuiz);
+        restartBtn.addEventListener('click', restartQuiz);
+        answerButtonsContainer.addEventListener('click', handleAnswer);
+
+        // --- 初期化 ---
+        showPage('top');
+
+    </script>
+</body>
+</html>
+
