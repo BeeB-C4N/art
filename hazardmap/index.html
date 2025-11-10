@@ -297,11 +297,9 @@
   }).addTo(map);
 
   // --- 避難所データ処理 ---
-  let cityLayerGroups = {}; // { "輪島市": L.layerGroup(), ... }
-  // let cityList = new Set(); // ★ 今回は使用しない
+  let cityLayerGroups = {};
   let currentCityLayer = null;
 
-  // CSVパース関数（変更なし）
   function parseCSV(csv) {
     const lines = csv.trim().split('\n');
     const headerLine = lines.shift() || ''; 
@@ -318,7 +316,7 @@
     });
   }
 
-  // ★ 修正：UI作成をfetchの外で先に実行
+  // ★ 修正：UI作成を先に実行
   createCitySelectorUI();
 
   fetch('./okunoto_evaluation_data.csv')
@@ -335,7 +333,6 @@
 
         if (!cityLayerGroups[city]) {
           cityLayerGroups[city] = L.layerGroup();
-          // cityList.add(city); // ★ 今回は使用しない
         }
 
         const name = row['名称'];
@@ -379,7 +376,7 @@
         }
       });
       
-      // ★ 修正：データ読み込み完了後に、デフォルトのレイヤー（輪島市）を表示
+      // データ読み込み完了後に、デフォルトのレイヤー（輪島市）を表示
       if (cityLayerGroups['輪島市']) {
         currentCityLayer = cityLayerGroups['輪島市'];
         map.addLayer(currentCityLayer);
@@ -397,24 +394,25 @@
     const citySelector = new L.Control({ position: 'topright' });
 
     citySelector.onAdd = function (map) {
+      // ★ 修正：innerHTML を使わずにDOMを構築
       const container = L.DomUtil.create('div', 'leaflet-control-layers city-selector-control');
       
-      container.innerHTML = '<h3>避難所（市町別）</h3>';
+      const title = L.DomUtil.create('h3', '', container);
+      title.textContent = '避難所（市町別）';
+      
       const form = L.DomUtil.create('form', 'leaflet-control-layers-list', container);
 
       const onRadioChange = (e) => {
         const selectedCity = e.target.value;
         if (currentCityLayer) {
-          map.removeLayer(currentCityLayer); // 今のレイヤーを消す
+          map.removeLayer(currentCityLayer);
         }
-        // cityLayerGroups にデータが（fetch完了後に）あれば表示
         if (cityLayerGroups[selectedCity]) {
           currentCityLayer = cityLayerGroups[selectedCity];
-          map.addLayer(currentCityLayer); // 新しいレイヤーを表示
+          map.addLayer(currentCityLayer);
         }
       };
 
-      // ★ 修正：リストをベタ打ち
       const cities = ['珠洲市', '輪島市', '能登町'];
       
       cities.forEach(city => {
@@ -426,7 +424,6 @@
         input.value = city;
         input.onchange = onRadioChange;
 
-        // デフォルトは「輪島市」にチェック
         if (city === '輪島市') {
           input.checked = true;
         }
@@ -441,8 +438,6 @@
     };
 
     citySelector.addTo(map);
-    
-    // ★ 修正：デフォルトのレイヤー表示は、fetch完了後に移動
   }
 
   // --- 現在地取得の処理 ---
