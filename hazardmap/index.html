@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
-  /* CSSは変更ありません（省略） */
+  /* CSS（変更箇所のみ抜粋） */
   html, body, #map {
     height: 100%;
     margin: 0;
@@ -183,7 +183,8 @@
     font-weight: 700;
     color: #333;
   }
-  .city-selector-control .leaflet-control-layers-list {
+  /* ★ 修正：競合していたクラス名を変更 */
+  .city-selector-control .city-selector-form {
     padding-right: 8px;
   }
   .city-selector-control label {
@@ -316,7 +317,7 @@
     });
   }
 
-  // ★ 修正：UI作成を先に実行
+  // UI作成を先に実行
   createCitySelectorUI();
 
   fetch('./okunoto_evaluation_data.csv')
@@ -394,13 +395,13 @@
     const citySelector = new L.Control({ position: 'topright' });
 
     citySelector.onAdd = function (map) {
-      // ★ 修正：innerHTML を使わずにDOMを構築
       const container = L.DomUtil.create('div', 'leaflet-control-layers city-selector-control');
       
       const title = L.DomUtil.create('h3', '', container);
       title.textContent = '避難所（市町別）';
       
-      const form = L.DomUtil.create('form', 'leaflet-control-layers-list', container);
+      // ★ 修正：競合していた 'leaflet-control-layers-list' を 'city-selector-form' に変更
+      const form = L.DomUtil.create('form', 'city-selector-form', container);
 
       const onRadioChange = (e) => {
         const selectedCity = e.target.value;
@@ -413,6 +414,7 @@
         }
       };
 
+      // ご指示通り、リストをベタ打ち
       const cities = ['珠洲市', '輪島市', '能登町'];
       
       cities.forEach(city => {
@@ -424,6 +426,7 @@
         input.value = city;
         input.onchange = onRadioChange;
 
+        // デフォルトは「輪島市」にチェック
         if (city === '輪島市') {
           input.checked = true;
         }
