@@ -1,1 +1,362 @@
 
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>かわいいハザードマップ</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!-- ポップな丸ゴシックフォント（M PLUS Rounded 1c）を読み込みます -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  /* 基本設定 */
+  html, body, #map {
+    height: 100%;
+    margin: 0;
+  }
+  body {
+    font-family: 'M PLUS Rounded 1c', 'Noto Sans JP', sans-serif;
+    background-color: #f0f4f8;
+  }
+
+  /* --- ポップ＆かわいいスタイル --- */
+
+  /* 1. ハザードマップ切り替え */
+  .leaflet-control-layers-expanded {
+    border-radius: 16px !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15) !important;
+    border: none !important;
+    padding: 12px !important;
+    background-color: #ffffff !important;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .leaflet-control-layers-list {
+    padding-right: 8px;
+  }
+
+  .leaflet-control-layers-overlays label {
+    display: block;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    border-radius: 12px;
+    background-color: #f4f7fa;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 15px;
+    user-select: none;
+  }
+  
+  .leaflet-control-layers-overlays label:hover {
+    background-color: #e9eef3;
+  }
+
+  /* カスタムチェックボックス */
+  .leaflet-control-layers-selector {
+    display: none;
+  }
+  .leaflet-control-layers-selector + span {
+    position: relative;
+    padding-left: 30px;
+    line-height: 20px;
+    display: inline-block;
+  }
+  .leaflet-control-layers-selector + span::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #b0bec5;
+    background: #fff;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+  }
+  .leaflet-control-layers-selector + span::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 6px;
+    width: 10px;
+    height: 10px;
+    background: #4dabf7;
+    border-radius: 50%;
+    transform: scale(0);
+    transition: transform 0.2s ease;
+  }
+  .leaflet-control-layers-selector:checked + span::before {
+    border-color: #4dabf7;
+  }
+  .leaflet-control-layers-selector:checked + span::after {
+    transform: scale(1);
+  }
+
+  /* 2. 出典表記 */
+  .attribution {
+    position: fixed;
+    right: 12px;
+    bottom: 12px;
+    background: #ffffff;
+    padding: 8px 12px;
+    font-size: 11px;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    z-index: 800;
+  }
+  .attribution a {
+    color: #0066cc;
+    text-decoration: none;
+  }
+  .attribution a:hover {
+    text-decoration: underline;
+  }
+
+  /* 3. 地図のズームボタン */
+  .leaflet-control-zoom-in,
+  .leaflet-control-zoom-out {
+    width: 34px !important;
+    height: 34px !important;
+    line-height: 34px !important;
+    border-radius: 50% !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: none !important;
+    background-color: #ffffff !important;
+    color: #4dabf7 !important;
+    font-size: 24px !important;
+    font-weight: 700 !important;
+  }
+  .leaflet-control-zoom-in {
+    margin-bottom: 8px !important;
+  }
+
+  /* 4. マーカーのポップアップ */
+  .leaflet-popup-content-wrapper {
+    border-radius: 12px !important;
+  }
+  .leaflet-popup-content {
+    font-size: 14px;
+    line-height: 1.6;
+    /* --- ポップアップのスクロール設定 --- */
+    max-height: 250px; /* ポップアップの最大高さを指定 */
+    overflow-y: auto; /* 高さを超えたらスクロール */
+    padding-right: 15px; /* スクロールバーの分、余白 */
+  }
+  .leaflet-popup-content strong {
+    font-size: 16px;
+    color: #333;
+    font-weight: 700;
+    display: block; /* 名前はブロック要素に */
+    margin-bottom: 4px;
+  }
+  .popup-address {
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 10px;
+  }
+
+  /* 災害種別のビジュアライズ用スタイル */
+  .disaster-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2列に */
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .disaster-item {
+    font-size: 13px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: #f0f0f0; /* デフォルトは灰色 */
+    color: #888;
+    transition: all 0.3s;
+  }
+  /* 「1」が立っている（アクティブ）な項目 */
+  .disaster-item.active {
+    background: #fff0f0; /* 背景を薄い赤に */
+    color: #d90000; /* 文字を赤に */
+    font-weight: 700;
+  }
+  /* アクティブな項目の絵文字 */
+  .disaster-item.active .icon {
+    display: inline;
+  }
+  /* 非アクティブな項目の絵文字 */
+  .disaster-item:not(.active) .icon {
+    display: none;
+  }
+
+  .other-info {
+    font-size: 13px;
+    border-top: 1px dashed #ccc;
+    padding-top: 8px;
+  }
+  .other-info div {
+    margin-bottom: 4px;
+  }
+  .other-info span {
+    font-weight: 700;
+    font-size: 15px;
+    color: #4dabf7;
+    margin-left: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- UI要素（出典） -->
+<div class="attribution">
+  出典：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a> / <a href="https://disaportal.gsi.go.jp/" target="_blank">ハザードマップポータル</a>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // --- CSVデータをここに埋め込みます ---
+  const csvData = `名称	名称_カナ	名称_英字	所在地_連結表記	所在地_都道府県	所在地_市区町村	所在地_町字	所在地_番地以下	建物名等(方書)	緯度	経度	標高	電話番号	災害種別_洪水	災害種別_崖崩れ、土石流及び地滑り	災害種別_高潮	災害種別_地震	災害種別_津波	災害種別_大規模な火事	災害種別_内水氾濫	災害種別_火山現象	指定避難所との重複	想定収容人数	対象となる町会・自治会	URL	画像	画像_ライセンス	備考
+旧金沢市立野町小学校	キュウカナザワシリツノマチショウガッコウ	kyukanazawashiritsunomachishogakko	金沢市野町３丁目11番１号	石川県	金沢市	野町3丁目	11番1号		36.55282538	136.6481028	31		1	1		1	1				1						
+石川県立金沢中央高等学校	イシカワケンリツカナザワチュウオウコウトウガッコウ	ishikawakenritsukanazawachuokotogakko	金沢市泉本町６丁目105番地	石川県	金沢市	泉本町６丁目	１０５番地		36.554056	136.638876	12		1	1		1	1				1						
+金沢市野町公民館	カナザワシノマチコウミンカン	kanazawashinomachikominkan	金沢市野町３丁目11番１号	石川県	金沢市	野町３丁目	11番1号		36.55266036	136.6482128	31		1	1		1	1				1						
+金沢市立泉小学校	カナザワシリツイズミショウガッコウ	kanazawashiritsuizumishogakko	金沢市弥生１丁目26番１号	石川県	金沢市	弥生１丁目	２６番１号		36.54972789	136.6463718	31		1	1		1	1				1						
+金沢市立泉中学校	カナザワシリツイズミチュウガッコウ	kanazawashiritsuizumichugakko	金沢市弥生１丁目26番１号	石川県	金沢市	弥生１丁目	２６番１号		36.54908927	136.6463824	31		1	1		1	1				1						
+金沢市弥生公民館	カナザワシヤヨイコウミンカン	kanazawashiyayoikominkan	金沢市弥生１丁目29番13号	石川県	金沢市	弥生１丁目	２９番１３号		36.54936094	136.6446655	27		1	1		1	1				1						
+弥生さくら公園	ヤヨイサクラコウエン	yayoisakurakoen	金沢市弥生１丁目753番２ほか	石川県	金沢市	弥生１丁目	７５３番２ほか		36.54908165	136.6443972	26		1	1		1	1										
+金沢市立中村町小学校	カナザワシリツナカムラマチショウガッコウ	kanazawashiritsunakamuramachishogakko	金沢市中村町26番12号	石川県	金沢市	中村町	２６番１２号		36.56086196	136.6420037	14		1	1		1	1				1						
+金沢市中村町公民館	カナザワシナカムラマチコウミンカン	kanazawashinakamuramachikominkan	金沢市中村町10番35号	石川県	金沢市	中村町	１０番３５号		36.55943517	136.6419275	15		1	1		1	1				1						
+神泉児童公園	シンセンジドウコウエン	shinsenjidokoen	金沢市神田２丁目27番地	石川県	金沢市	神田２丁目	２７番地		36.55949675	136.6352498	12			1		1	1										
+神田町児童公園	カンダマチジドウコウエン	kandamachijidokoen	金沢市神田１丁目271番地	石川県	金沢市	神田１丁目	２７１番地		36.56221646	136.6373807	13			1		1	1										
+`;
+
+  // --- マップ初期化 ---
+
+  const map = L.map('map', {
+    zoomControl: false // デフォルトのズームコントロールを無効化
+  }).setView([37.3915, 136.9035], 13); // ★輪島市役所付近, ズーム13に設定
+
+  // カスタマイズしたズームコントロールを追加
+  L.control.zoom({ position: 'topleft' }).addTo(map);
+
+  const base = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', {
+    maxZoom: 18, // このレイヤーの最大ズーム
+    attribution: 'GSI'
+  }).addTo(map);
+
+  // --- ハザードマップレイヤー (透明度100%) ---
+  const floodL2 = L.tileLayer(
+    'https://disaportaldata.gsi.go.jp/raster/01_Flood_l2_shinsuishin_Kuni_data/{z}/{x}/{y}.png',
+    { maxZoom: 17 }
+  );
+  const kyukeisha = L.tileLayer(
+    'https://disaportaldata.gsi.go.jp/raster/05_kyukeishakeikaikuiki/{z}/{x}/{y}.png',
+    { maxZoom: 17 }
+  );
+  const dosekiryuu = L.tileLayer(
+    'https://disaportaldata.gsi.go.jp/raster/05_dosekiryukeikaikuiki/{z}/{x}/{y}.png',
+    { maxZoom: 17 }
+  );
+  const jisuberi = L.tileLayer(
+    'https://disaportaldata.gsi.go.jp/raster/05_jisuberikeikaikuiki/{z}/{x}/{y}.png',
+    { maxZoom: 17 }
+  );
+
+  // ★「地すべり」を最初からマップに追加
+  jisuberi.addTo(map);
+
+  const overlays = {
+    "🌊 洪水（浸水想定 L2）": floodL2,
+    "⛰️ 土砂：急傾斜": kyukeisha,
+    "🏞️ 土砂：土石流": dosekiryuu,
+    "🏜️ 土砂：地すべり": jisuberi
+  };
+  
+  L.control.layers({}, overlays, { 
+    collapsed: false,
+    position: 'topright' 
+  }).addTo(map);
+
+  // --- CSVデータ（避難所）の処理 ---
+
+  function parseTSV(tsv) {
+    const lines = tsv.trim().split('\n');
+    return lines.map(line => line.split('\t'));
+  }
+
+  const data = parseTSV(csvData);
+  const headers = data.shift(); // ヘッダー行
+
+  // マーカーを追加
+  data.forEach(row => {
+    // 必要なデータをインデックスで取得
+    const name = row[0];
+    const address = row[3];
+    const lat = parseFloat(row[9]);
+    const lon = parseFloat(row[10]);
+    
+    // 災害種別
+    const flood = row[13];      // 洪水
+    const cliff = row[14];      // 崖崩れ...
+    const tide = row[15];       // 高潮
+    const quake = row[16];      // 地震
+    const tsunami = row[17];    // 津波
+    const fire = row[18];       // 大規模火事
+    const inland = row[19];     // 内水氾濫
+    const volcano = row[20];    // 火山
+    
+    // その他情報
+    const duplicate = row[21];  // 重複
+    const capacity = row[22];   // 想定収容人数
+
+    if (!isNaN(lat) && !isNaN(lon)) {
+      // ★ ポップアップ用のHTMLコンテンツを生成
+      const popupContent = `
+        <strong>${name}</strong>
+        <div class="popup-address">${address || '住所情報なし'}</div>
+        <div class="disaster-info">
+          <div class="disaster-item ${flood === '1' ? 'active' : ''}"><span class="icon">🌊</span> 洪水</div>
+          <div class="disaster-item ${cliff === '1' ? 'active' : ''}"><span class="icon">⛰️</span> 崖崩れ等</div>
+          <div class="disaster-item ${tide === '1' ? 'active' : ''}"><span class="icon">🌀</span> 高潮</div>
+          <div class="disaster-item ${quake === '1' ? 'active' : ''}"><span class="icon">🌎</span> 地震</div>
+          <div class="disaster-item ${tsunami === '1' ? 'active' : ''}"><span class="icon">🌊</span> 津波</div>
+          <div class="disaster-item ${fire === '1' ? 'active' : ''}"><span class="icon">🔥</span> 大規模火事</div>
+          <div class="disaster-item ${inland === '1' ? 'active' : ''}"><span class="icon">💧</span> 内水氾濫</div>
+          <div class="disaster-item ${volcano === '1' ? 'active' : ''}"><span class="icon">🌋</span> 火山</div>
+        </div>
+        <div class="other-info">
+          <div>👥 想定収容人数: <span>${capacity || '情報なし'}</span></div>
+          ${duplicate === '1' ? '<div>（指定避難所と重複）</div>' : ''}
+        </div>
+      `;
+
+      L.marker([lat, lon])
+        .bindPopup(popupContent)
+        .addTo(map);
+    }
+  });
+
+  // --- 現在地取得の処理 ---
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      const latlng = [pos.coords.latitude, pos.coords.longitude];
+      
+      L.circleMarker(latlng, { 
+        radius: 10, 
+        weight: 3, 
+        color: '#ffffff',
+        fillColor: '#0066ff',
+        fillOpacity: 0.8 
+      })
+        .bindPopup('📍 いまここ')
+        .addTo(map)
+        .openPopup();
+      
+      // 注意：現在地取得が成功すると、輪島市ではなく現在地へ視点が移動します
+      map.setView(latlng, 15);
+    });
+  }
+</script>
+</body>
+</html>
