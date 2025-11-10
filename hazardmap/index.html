@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<!-- 1. タイトルを変更 -->
 <title>奥能登ポケットハザードマップ（プロトタイプ）</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -114,6 +113,8 @@
     border-radius: 50% !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     border: none !important;
+    background-color: #ffffff !important;
+    color: #4dabf7 !important;
   }
   
   /* 4. マーカーのポップアップ */
@@ -175,9 +176,8 @@
     margin-left: 8px;
   }
 
-  /* 5. (新規) 市区町村セレクター */
+  /* 5. 市区町村セレクター */
   .city-selector-control {
-    /* .leaflet-control-layers-expanded のスタイルを流用 */
     border-radius: 16px !important;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15) !important;
     border: none !important;
@@ -185,8 +185,7 @@
     background-color: #ffffff !important;
     max-height: 40vh; /* 高さを制限 */
     overflow-y: auto;
-    margin-top: 10px; /* ハザードマップコントロールとの間隔 */
-    /* leaflet-control-layers クラスを共有 */
+    margin-top: 10px;
   }
   .city-selector-control h3 {
     margin: 0 0 8px 0;
@@ -210,7 +209,6 @@
   .city-selector-control label:hover {
     background-color: #f4f7fa;
   }
-  /* カスタムラジオボタン */
   .city-selector-control input[type="radio"] {
     display: none;
   }
@@ -278,9 +276,19 @@
   }).addTo(map);
 
   // --- ハザードマップレイヤー ---
-  const floodL2 = L.tileLayer('...', { maxZoom: 17 }); // (URL省略)
-  const kyukeisha = L.tileLayer('...', { maxZoom: 17 }); // (URL省略)
-  const dosekiryuu = L.tileLayer('...', { maxZoom: 17 }); // (URL省略)
+  // ★ バグ修正：URLを正しく記載
+  const floodL2 = L.tileLayer(
+    'https://disaportaldata.gsi.go.jp/raster/01_Flood_l2_shinsuishin_Kuni_data/{z}/{x}/{y}.png',
+    { maxZoom: 17 }
+  );
+  const kyukeisha = L.tileLayer(
+    'https://disaportaldata.gsi.go.jp/raster/05_kyukeishakeikaikuiki/{z}/{x}/{y}.png',
+    { maxZoom: 17 }
+  );
+  const dosekiryuu = L.tileLayer(
+    'https://disaportaldata.gsi.go.jp/raster/05_dosekiryukeikaikuiki/{z}/{x}/{y}.png',
+    { maxZoom: 17 }
+  );
   const jisuberi = L.tileLayer(
     'https://disaportaldata.gsi.go.jp/raster/05_jisuberikeikaikuiki/{z}/{x}/{y}.png',
     { maxZoom: 17 }
@@ -288,24 +296,22 @@
   jisuberi.addTo(map); // 「地すべり」を初期表示
 
   const overlays = {
+    // 絵文字が短縮名と被るので調整
     "🌊 洪水": floodL2,
     "⛰️ 急傾斜": kyukeisha,
     "🏞️ 土石流": dosekiryuu,
     "🏜️ 地すべり": jisuberi
   };
   
-  // ハザードマップのコントロール
   L.control.layers({}, overlays, { 
     collapsed: false,
     position: 'topright' 
   }).addTo(map);
 
   // --- 避難所データ処理 ---
-
-  // 2. 避難所マーカーを管理する変数を定義
-  let cityLayerGroups = {}; // 市区町村ごとのレイヤーグループ { "輪島市": L.layerGroup(), ... }
-  let cityList = new Set(); // 市区町村名のリスト
-  let currentCityLayer = null; // 現在表示中のレイヤー
+  let cityLayerGroups = {};
+  let cityList = new Set();
+  let currentCityLayer = null;
 
   function parseTSV(tsv) {
     const lines = tsv.trim().split('\n');
@@ -330,14 +336,12 @@
       const data = parseTSV(csvText);
 
       data.forEach(row => {
-        // 3. 市区町村名でマーカーを分類
         const city = row['所在地_市区町村'];
-        if (!city) return; // 市区町村名がなければスキップ
+        if (!city) return; 
 
-        // LayerGroupがなければ作成
         if (!cityLayerGroups[city]) {
           cityLayerGroups[city] = L.layerGroup();
-          cityList.add(city); // リストにも追加
+          cityList.add(city);
         }
 
         const name = row['名称'];
@@ -346,6 +350,7 @@
         const lon = parseFloat(row['経度']);
         
         if (!isNaN(lat) && !isNaN(lon) && name) {
+          // ポップアップの中身（省略）
           const flood = row['災害種別_洪水'];
           const cliff = row['災害種別_崖崩れ、土石流及び地滑り'];
           const tide = row['災害種別_高潮'];
@@ -377,12 +382,10 @@
           `;
           
           const marker = L.marker([lat, lon]).bindPopup(popupContent);
-          // 4. マップではなく、市区町村のレイヤーグループに追加
           cityLayerGroups[city].addLayer(marker); 
         }
       });
 
-      // 5. CSV読み込み後に市区町村セレクターUIを作成
       createCitySelectorUI();
     })
     .catch(error => {
@@ -390,7 +393,7 @@
       alert('避難所データ(CSV)の読み込みに失敗しました。');
     });
 
-  // 6. 市区町村セレクターUIを作成・追加する関数
+  // 市区町村セレクターUIを作成・追加する関数
   function createCitySelectorUI() {
     const citySelector = new L.Control({ position: 'topright' });
 
@@ -400,19 +403,20 @@
       container.innerHTML = '<h3>避難所（市町別）</h3>';
       const form = L.DomUtil.create('form', 'leaflet-control-layers-list', container);
 
-      // ラジオボタン変更時の動作
       const onRadioChange = (e) => {
         const selectedCity = e.target.value;
         if (currentCityLayer) {
-          map.removeLayer(currentCityLayer); // 現在のレイヤーを削除
+          map.removeLayer(currentCityLayer);
         }
+        
+        // ★ バグ修正：タイポ (selectedVity -> selectedCity)
         if (cityLayerGroups[selectedCity]) {
-          currentCityLayer = cityLayerGroups[selectedVity]; // 新しいレイヤーをセット
-          map.addLayer(currentCityLayer); // マップに追加
+          currentCityLayer = cityLayerGroups[selectedCity]; // 正しい変数名に
+          map.addLayer(currentCityLayer);
         }
       };
 
-      const cities = Array.from(cityList).sort(); // 市区町村名をソート
+      const cities = Array.from(cityList).sort();
       cities.forEach(city => {
         const label = L.DomUtil.create('label', '', form);
         
@@ -422,7 +426,6 @@
         input.value = city;
         input.onchange = onRadioChange;
 
-        // 7. デフォルトで「輪島市」にチェック
         if (city === '輪島市') {
           input.checked = true;
         }
@@ -431,6 +434,7 @@
         span.textContent = city;
       });
       
+      // マップ操作が乗っ取られないようにする
       L.DomEvent.disableClickPropagation(container);
       L.DomEvent.disableScrollPropagation(container);
       return container;
@@ -438,7 +442,7 @@
 
     citySelector.addTo(map);
 
-    // 8. デフォルトで「輪島市」のマーカーを表示
+    // デフォルトで「輪島市」のマーカーを表示
     if (cityLayerGroups['輪島市']) {
       currentCityLayer = cityLayerGroups['輪島市'];
       map.addLayer(currentCityLayer);
