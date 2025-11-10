@@ -297,22 +297,20 @@
   }).addTo(map);
 
   // --- 避難所データ処理 ---
-  let cityLayerGroups = {};
-  let cityList = new Set();
+  let cityLayerGroups = {}; // { "輪島市": L.layerGroup(), ... }
+  // let cityList = new Set(); // ★ 今回は使用しない
   let currentCityLayer = null;
 
-  // ★ 修正：parseTSV -> parseCSV に変更
-  // ★ 修正：split('\t') -> split(',') に変更
+  // CSVパース関数（変更なし）
   function parseCSV(csv) {
     const lines = csv.trim().split('\n');
     const headerLine = lines.shift() || ''; 
-    const headers = headerLine.split(','); // ★ カンマに変更
+    const headers = headerLine.split(',');
 
     return lines.map(line => {
-        const values = line.split(','); // ★ カンマに変更
+        const values = line.split(',');
         const entry = {};
         headers.forEach((header, index) => {
-            // " や \r を取り除く簡易的なサニタイズ
             const cleanHeader = header.trim().replace(/"/g, '');
             entry[cleanHeader] = values[index] ? values[index].trim().replace(/"/g, '').replace(/\r/g, '') : '';
         });
@@ -320,23 +318,24 @@
     });
   }
 
+  // ★ 修正：UI作成をfetchの外で先に実行
+  createCitySelectorUI();
+
   fetch('./okunoto_evaluation_data.csv')
     .then(response => {
       if (!response.ok) throw new Error(`CSVの読み込み失敗 (HTTP ${response.status})`);
       return response.text();
     })
     .then(csvText => {
-      // ★ 修正：parseTSV -> parseCSV に変更
       const data = parseCSV(csvText);
 
       data.forEach(row => {
-        // ヘッダー名でデータを参照
         const city = row['所在地_市区町村'];
         if (!city) return; 
 
         if (!cityLayerGroups[city]) {
           cityLayerGroups[city] = L.layerGroup();
-          cityList.add(city);
+          // cityList.add(city); // ★ 今回は使用しない
         }
 
         const name = row['名称'];
@@ -379,9 +378,14 @@
           cityLayerGroups[city].addLayer(marker); 
         }
       });
-
-      // CSVのパースが終わったらUIを作成
-      createCitySelectorUI();
+      
+      // ★ 修正：データ読み込み完了後に、デフォルトのレイヤー（輪島市）を表示
+      if (cityLayerGroups['輪島市']) {
+        currentCityLayer = cityLayerGroups['輪島市'];
+        map.addLayer(currentCityLayer);
+      } else {
+        console.warn("デフォルトの「輪島市」のデータが見つかりませんでした。");
+      }
     })
     .catch(error => {
       console.error('CSVデータの読み込みエラー:', error);
@@ -401,22 +405,17 @@
       const onRadioChange = (e) => {
         const selectedCity = e.target.value;
         if (currentCityLayer) {
-          map.removeLayer(currentCityLayer);
+          map.removeLayer(currentCityLayer); // 今のレイヤーを消す
         }
+        // cityLayerGroups にデータが（fetch完了後に）あれば表示
         if (cityLayerGroups[selectedCity]) {
           currentCityLayer = cityLayerGroups[selectedCity];
-          map.addLayer(currentCityLayer);
+          map.addLayer(currentCityLayer); // 新しいレイヤーを表示
         }
       };
 
-      const cities = Array.from(cityList).sort();
-      
-      // データが空の場合の表示
-      if (cities.length === 0) {
-          form.innerHTML = '<div style="padding: 5px 10px; color: #777;">データがありません</div>';
-          console.warn("避難所データから市区町村リストを生成できませんでした。CSVのパースが成功しているか確認してください。");
-          return container;
-      }
+      // ★ 修正：リストをベタ打ち
+      const cities = ['珠洲市', '輪島市', '能登町'];
       
       cities.forEach(city => {
         const label = L.DomUtil.create('label', '', form);
@@ -427,6 +426,7 @@
         input.value = city;
         input.onchange = onRadioChange;
 
+        // デフォルトは「輪島市」にチェック
         if (city === '輪島市') {
           input.checked = true;
         }
@@ -441,14 +441,8 @@
     };
 
     citySelector.addTo(map);
-
-    // デフォルトで「輪島市」のマーカーを表示
-    if (cityLayerGroups['輪島市']) {
-      currentCityLayer = cityLayerGroups['輪島市'];
-      map.addLayer(currentCityLayer);
-    } else {
-        console.warn("デフォルトの「輪島市」のデータが見つかりませんでした。");
-    }
+    
+    // ★ 修正：デフォルトのレイヤー表示は、fetch完了後に移動
   }
 
   // --- 現在地取得の処理 ---
