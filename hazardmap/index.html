@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
-  /* 基本設定 */
+  /* CSSは変更ありません（省略） */
   html, body, #map {
     height: 100%;
     margin: 0;
@@ -19,8 +19,6 @@
     font-family: 'M PLUS Rounded 1c', 'Noto Sans JP', sans-serif;
     background-color: #f0f4f8;
   }
-
-  /* 1. ハザードマップ切り替え */
   .leaflet-control-layers-expanded {
     border-radius: 16px !important;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15) !important;
@@ -86,8 +84,6 @@
   .leaflet-control-layers-selector:checked + span::after {
     transform: scale(1);
   }
-
-  /* 2. 出典表記 */
   .attribution {
     position: fixed;
     right: 12px;
@@ -103,8 +99,6 @@
     color: #0066cc;
     text-decoration: none;
   }
-
-  /* 3. 地図のズームボタン */
   .leaflet-control-zoom-in,
   .leaflet-control-zoom-out {
     width: 34px !important;
@@ -116,8 +110,6 @@
     background-color: #ffffff !important;
     color: #4dabf7 !important;
   }
-  
-  /* 4. マーカーのポップアップ */
   .leaflet-popup-content-wrapper {
     border-radius: 12px !important;
   }
@@ -175,15 +167,13 @@
     color: #4dabf7;
     margin-left: 8px;
   }
-
-  /* 5. 市区町村セレクター */
   .city-selector-control {
     border-radius: 16px !important;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15) !important;
     border: none !important;
     padding: 12px !important;
     background-color: #ffffff !important;
-    max-height: 40vh; /* 高さを制限 */
+    max-height: 40vh;
     overflow-y: auto;
     margin-top: 10px;
   }
@@ -227,7 +217,7 @@
     height: 20px;
     border: 2px solid #b0bec5;
     background: #fff;
-    border-radius: 50%; /* 丸 */
+    border-radius: 50%;
     transition: all 0.2s ease;
   }
   .city-selector-control input[type="radio"] + span::after {
@@ -266,7 +256,7 @@
   // --- マップ初期化 ---
   const map = L.map('map', {
     zoomControl: false
-  }).setView([37.3915, 136.9035], 13); // 輪島市役所付近, ズーム13
+  }).setView([37.3915, 136.9035], 13);
 
   L.control.zoom({ position: 'topleft' }).addTo(map);
 
@@ -276,7 +266,6 @@
   }).addTo(map);
 
   // --- ハザードマップレイヤー ---
-  // ★ バグ修正：URLを正しく記載
   const floodL2 = L.tileLayer(
     'https://disaportaldata.gsi.go.jp/raster/01_Flood_l2_shinsuishin_Kuni_data/{z}/{x}/{y}.png',
     { maxZoom: 17 }
@@ -293,10 +282,9 @@
     'https://disaportaldata.gsi.go.jp/raster/05_jisuberikeikaikuiki/{z}/{x}/{y}.png',
     { maxZoom: 17 }
   );
-  jisuberi.addTo(map); // 「地すべり」を初期表示
+  jisuberi.addTo(map);
 
   const overlays = {
-    // 絵文字が短縮名と被るので調整
     "🌊 洪水": floodL2,
     "⛰️ 急傾斜": kyukeisha,
     "🏞️ 土石流": dosekiryuu,
@@ -313,15 +301,20 @@
   let cityList = new Set();
   let currentCityLayer = null;
 
-  function parseTSV(tsv) {
-    const lines = tsv.trim().split('\n');
+  // ★ 修正：parseTSV -> parseCSV に変更
+  // ★ 修正：split('\t') -> split(',') に変更
+  function parseCSV(csv) {
+    const lines = csv.trim().split('\n');
     const headerLine = lines.shift() || ''; 
-    const headers = headerLine.split('\t');
+    const headers = headerLine.split(','); // ★ カンマに変更
+
     return lines.map(line => {
-        const values = line.split('\t');
+        const values = line.split(','); // ★ カンマに変更
         const entry = {};
         headers.forEach((header, index) => {
-            entry[header.trim()] = values[index] ? values[index].trim() : '';
+            // " や \r を取り除く簡易的なサニタイズ
+            const cleanHeader = header.trim().replace(/"/g, '');
+            entry[cleanHeader] = values[index] ? values[index].trim().replace(/"/g, '').replace(/\r/g, '') : '';
         });
         return entry;
     });
@@ -333,9 +326,11 @@
       return response.text();
     })
     .then(csvText => {
-      const data = parseTSV(csvText);
+      // ★ 修正：parseTSV -> parseCSV に変更
+      const data = parseCSV(csvText);
 
       data.forEach(row => {
+        // ヘッダー名でデータを参照
         const city = row['所在地_市区町村'];
         if (!city) return; 
 
@@ -350,7 +345,6 @@
         const lon = parseFloat(row['経度']);
         
         if (!isNaN(lat) && !isNaN(lon) && name) {
-          // ポップアップの中身（省略）
           const flood = row['災害種別_洪水'];
           const cliff = row['災害種別_崖崩れ、土石流及び地滑り'];
           const tide = row['災害種別_高潮'];
@@ -386,6 +380,7 @@
         }
       });
 
+      // CSVのパースが終わったらUIを作成
       createCitySelectorUI();
     })
     .catch(error => {
@@ -408,15 +403,21 @@
         if (currentCityLayer) {
           map.removeLayer(currentCityLayer);
         }
-        
-        // ★ バグ修正：タイポ (selectedVity -> selectedCity)
         if (cityLayerGroups[selectedCity]) {
-          currentCityLayer = cityLayerGroups[selectedCity]; // 正しい変数名に
+          currentCityLayer = cityLayerGroups[selectedCity];
           map.addLayer(currentCityLayer);
         }
       };
 
       const cities = Array.from(cityList).sort();
+      
+      // データが空の場合の表示
+      if (cities.length === 0) {
+          form.innerHTML = '<div style="padding: 5px 10px; color: #777;">データがありません</div>';
+          console.warn("避難所データから市区町村リストを生成できませんでした。CSVのパースが成功しているか確認してください。");
+          return container;
+      }
+      
       cities.forEach(city => {
         const label = L.DomUtil.create('label', '', form);
         
@@ -434,7 +435,6 @@
         span.textContent = city;
       });
       
-      // マップ操作が乗っ取られないようにする
       L.DomEvent.disableClickPropagation(container);
       L.DomEvent.disableScrollPropagation(container);
       return container;
@@ -446,6 +446,8 @@
     if (cityLayerGroups['輪島市']) {
       currentCityLayer = cityLayerGroups['輪島市'];
       map.addLayer(currentCityLayer);
+    } else {
+        console.warn("デフォルトの「輪島市」のデータが見つかりませんでした。");
     }
   }
 
