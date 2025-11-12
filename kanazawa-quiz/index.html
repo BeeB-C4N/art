@@ -101,11 +101,14 @@
 
     <div id="app" class="container mx-auto max-w-2xl p-4 min-h-screen flex flex-col justify-center items-center">
 
-        <!-- トップページ -->
-        <div id="top-page" class="text-center p-8 card-bg w-full fade-in">
-            <h1 class="text-3xl md:text-5xl font-bold gradient-text bg-gradient-to-r from-amber-600 to-gray-800 mb-6">
-                かなざわ町名・坂道クイズ
-            </h1>
+        <!-- トップページ --><div id="top-page" class="text-center p-8 card-bg w-full fade-in">
+            
+            <!-- タイトルと外部リンクボタンのコンテナ --><div class="flex flex-col md:flex-row justify-center items-center md:items-baseline gap-4 mb-6">
+                <h1 class="text-3xl md:text-5xl font-bold gradient-text bg-gradient-to-r from-amber-600 to-gray-800">
+                    かなざわ町名・坂道クイズ
+                </h1>
+                <!-- 削除されたボタン --></div>
+
             <p class="text-gray-600 mb-10 text-lg">
                 金沢の奥深い地名の数々。<br>あなたはいくつ読めますか？全10問に挑戦！
             </p>
@@ -114,19 +117,15 @@
             </button>
         </div>
 
-        <!-- クイズページ -->
-        <div id="quiz-page" class="hidden p-6 sm:p-8 card-bg w-full">
-            <!-- タイマー表示エリア -->
-            <div class="flex justify-between items-center mb-4">
+        <!-- クイズページ --><div id="quiz-page" class="hidden p-6 sm:p-8 card-bg w-full">
+            <!-- タイマー表示エリア --><div class="flex justify-between items-center mb-4">
                 <h2 class="text-3xl font-bold gradient-text bg-gradient-to-r from-green-800 to-amber-700">
                     第<span id="question-number">1</span>問
                 </h2>
                 <div id="timer-display" class="text-2xl font-bold text-amber-800">
-                    <!-- JSで残り時間をセット -->
-                </div>
+                    <!-- JSで残り時間をセット --></div>
             </div>
-            <!-- タイマーバー -->
-            <div class="w-full bg-gray-200 rounded-full mb-6">
+            <!-- タイマーバー --><div class="w-full bg-gray-200 rounded-full mb-6">
                 <div id="timer-bar" class="timer-bar rounded-full"></div>
             </div>
             
@@ -144,11 +143,9 @@
             </div>
         </div>
 
-        <!-- 答え合わせページ -->
-        <div id="answer-page" class="hidden text-center p-6 sm:p-8 card-bg w-full">
+        <!-- 答え合わせページ --><div id="answer-page" class="hidden text-center p-6 sm:p-8 card-bg w-full">
             <h2 id="answer-result-text" class="text-6xl md:text-8xl font-bold mb-8">
-                <!-- JSで「正解！」または「不正解！」をセット -->
-            </h2>
+                <!-- JSで「正解！」または「不正解！」をセット --></h2>
             
             <div class="p-6 bg-gray-50 border border-gray-200 rounded-lg text-left">
                 <p class="text-lg mb-4">
@@ -163,13 +160,11 @@
             </div>
             
             <button id="next-button" class="btn btn-primary text-lg w-full mt-8">
-                <!-- JSで「次の問題へ」または「結果を見る」をセット -->
-            </button>
+                <!-- JSで「次の問題へ」または「結果を見る」をセット --></button>
         </div>
 
 
-        <!-- 結果ページ -->
-        <div id="result-page" class="hidden text-center p-6 sm:p-8 card-bg w-full">
+        <!-- 結果ページ --><div id="result-page" class="hidden text-center p-6 sm:p-8 card-bg w-full">
             <h2 class="text-4xl font-bold gradient-text bg-gradient-to-r from-amber-600 to-gray-800 mb-6">結果発表</h2>
             <p class="text-xl mb-2">あなたの正解数は...</p>
             <p class="text-7xl font-extrabold my-4">
@@ -182,9 +177,16 @@
             <button id="retry-button" class="btn btn-primary text-lg w-full">
                 もう一度挑戦する
             </button>
+            
+            <a href="https://beeb-c4n.github.io/art/kanazawa-quiz-map" 
+               target="_blank" rel="noopener noreferrer" 
+               class="btn btn-secondary text-lg w-full mt-4 inline-block">
+                マップで確認する
+            </a>
         </div>
     </div>
 
+    <!-- ▼▼▼ 修正: 途切れていたスクリプトを完全に復元 ▼▼▼ -->
     <script>
         // --- クイズデータ (省略せず全て保持) ---
         const allQuizData = [
@@ -631,5 +633,6 @@
         retryButton.addEventListener('click', startGame);
 
     </script>
+    <!-- ▲▲▲ 修正完了 ▲▲▲ -->
 </body>
 </html>
