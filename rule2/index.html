@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#06121c" />
+  <title>rule — living field</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #06121c;
+    }
+    body {
+      overscroll-behavior: none;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100dvh;
+      background: #06121c;
+    }
+    .veil {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 50%, transparent 34%, rgba(0,0,0,.14) 100%),
+        linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.06));
+      mix-blend-mode: multiply;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="art" aria-label="Animated abstract artwork from the rule series"></canvas>
+  <div class="veil" aria-hidden="true"></div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const canvas = document.getElementById('art');
+      const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+      const TAU = Math.PI * 2;
+
+      const COLORS = {
+        bg: '#06121c',
+        bg2: '#09253a',
+        ink: '#02070b',
+        ink2: '#091219',
+        blue0: '#0b2f49',
+        blue1: '#144f73',
+        blue2: '#2b6c95',
+        blue3: '#5d8fb5',
+        chalk: '#edf1f4',
+        yellow: '#f0b51e',
+        red: '#e33b24'
+      };
+
+      let W = 0;
+      let H = 0;
+      let DPR = 1;
+      let baseSeed = Math.floor(Math.random() * 1e9);
+      let layers = [];
+      let traces = [];
+      let dust = [];
+      let bands = [];
+      let last = performance.now();
+      let time = 0;
+      let resizeTimer = 0;
+
+      function mulberry32(seed) {
+        return function() {
+          let t = seed += 0x6D2B79F5;
+          t = Math.imul(t ^ t >>> 15, t | 1);
+          t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+          return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        };
+      }
+
+      function randRange(rng, min, max) {
+        return min + (max - min) * rng();
+      }
+
+      function choose(rng, values) {
+        return values[Math.floor(rng() * values.length)];
+      }
+
+      function makeTexture(seed, options) {
+        const rng = mulberry32(seed);
+        const size = options.size || 1024;
+        const c = document.createElement('canvas');
+        c.width = size;
+        c.height = size;
+        const g = c.getContext('2d');
+        g.clearRect(0, 0, size, size);
+        g.lineCap = 'round';
+        g.lineJoin = 'round';
+
+        if (options.baseWash) {
+          const wash = g.createLinearGradient(0, 0, size, size);
+          wash.addColorStop(0, choose(rng, [COLORS.bg, COLORS.bg2, COLORS.blue0]));
+          wash.addColorStop(0.5, choose(rng, [COLORS.blue0, COLORS.blue1, COLORS.ink2]));
+          wash.addColorStop(1, choose(rng, [COLORS.bg, COLORS.bg2, COLORS.blue1]));
+          g.globalAlpha = 0.9;
+          g.fillStyle = wash;
+          g.fillRect(0, 0, size, size);
+        }
+
+        const swirls = options.swirls || 0;
+        for (let i = 0; i < swirls; i++) {
+          const color = choose(rng, options.palette);
+          const cx = randRange(rng, -size * 0.2, size * 1.2);
+          const cy = randRange(rng, -size * 0.2, size * 1.2);
+          const rx = randRange(rng, size * 0.02, size * 0.14);
+          const ry = randRange(rng, size * 0.03, size * 0.21);
+          const rot = randRange(rng, 0, TAU);
+          const loops = Math.floor(randRange(rng, 24, 52));
+          g.beginPath();
+          for (let p = 0; p <= loops; p++) {
+            const a = (p / loops) * TAU;
+            const jitter = 1 + Math.sin(a * randRange(rng, 2.5, 8.5) + i * 0.12) * randRange(rng, 0.06, 0.34);
+            const xx = Math.cos(a) * rx * jitter;
+            const yy = Math.sin(a) * ry * jitter;
+            const x = cx + xx * Math.cos(rot) - yy * Math.sin(rot);
+            const y = cy + xx * Math.sin(rot) + yy * Math.cos(rot);
+            if (p === 0) g.moveTo(x, y);
+            else g.lineTo(x, y);
+          }
+          g.globalAlpha = randRange(rng, 0.18, 0.85);
+          g.strokeStyle = color;
+          g.lineWidth = randRange(rng, options.loopWidthMin || 1, options.loopWidthMax || 6);
+          g.stroke();
+        }
+
+        const strokes = options.strokes || 0;
+        for (let i = 0; i < strokes; i++) {
+          const color = choose(rng, options.palette);
+          const x0 = randRange(rng, -size * 0.18, size * 1.18);
+          const y0 = randRange(rng, -size * 0.18, size * 1.18);
+          const direction = randRange(rng, 0, TAU);
+          const length = randRange(rng, size * 0.04, size * 0.42);
+          const bend = randRange(rng, -2.4, 2.4);
+          const turns = Math.floor(randRange(rng, 6, 26));
+          const wobbleScale = randRange(rng, 4, 26);
+          g.beginPath();
+          for (let p = 0; p <= turns; p++) {
+            const u = p / turns;
+            const wobble = Math.sin(u * TAU * randRange(rng, 0.5, 2.3) + i * 0.07) * wobbleScale;
+            const wobble2 = Math.cos(u * TAU * randRange(rng, 1.1, 4.6) - i * 0.03) * wobbleScale * 0.4;
+            const ang = direction + bend * (u - 0.5) + Math.sin(u * TAU * 1.7 + i * 0.11) * 0.8;
+            const x = x0 + Math.cos(ang) * length * u + Math.cos(ang + Math.PI / 2) * (wobble + wobble2);
+            const y = y0 + Math.sin(ang) * length * u + Math.sin(ang + Math.PI / 2) * (wobble + wobble2);
+            if (p === 0) g.moveTo(x, y);
+            else g.lineTo(x, y);
+          }
+          g.globalAlpha = randRange(rng, options.alphaMin || 0.24, options.alphaMax || 0.92);
+          g.strokeStyle = color;
+          g.lineWidth = randRange(rng, options.widthMin || 1, options.widthMax || 9.5);
+          g.stroke();
+        }
+
+        const scratches = options.scratches || 0;
+        for (let i = 0; i < scratches; i++) {
+          g.globalAlpha = randRange(rng, 0.08, 0.34);
+          g.strokeStyle = choose(rng, options.palette);
+          g.lineWidth = randRange(rng, 0.5, 1.8);
+          g.beginPath();
+          const x = randRange(rng, 0, size);
+          const y = randRange(rng, 0, size);
+          g.moveTo(x, y);
+          g.lineTo(x + randRange(rng, -120, 120), y + randRange(rng, -120, 120));
+          g.stroke();
+        }
+
+        const splatters = options.splatters || 0;
+        for (let i = 0; i < splatters; i++) {
+          const cx = randRange(rng, 0, size);
+          const cy = randRange(rng, 0, size);
+          const color = choose(rng, options.splatterPalette || options.palette);
+          const n = Math.floor(randRange(rng, 4, 14));
+          for (let j = 0; j < n; j++) {
+            g.globalAlpha = randRange(rng, 0.35, 0.95);
+            g.fillStyle = color;
+            const r = randRange(rng, options.dotMin || 1.2, options.dotMax || 6.5);
+            g.beginPath();
+            g.arc(
+              cx + randRange(rng, -54, 54),
+              cy + randRange(rng, -54, 54),
+              r,
+              0,
+              TAU
+            );
+            g.fill();
+          }
+        }
+
+        const haze = options.haze || 0;
+        for (let i = 0; i < haze; i++) {
+          g.globalAlpha = randRange(rng, 0.03, 0.1);
+          const grad = g.createRadialGradient(
+            randRange(rng, 0, size),
+            randRange(rng, 0, size),
+            0,
+            randRange(rng, 0, size),
+            randRange(rng, 0, size),
+            randRange(rng, size * 0.08, size * 0.32)
+          );
+          grad.addColorStop(0, choose(rng, options.palette));
+          grad.addColorStop(1, 'rgba(0,0,0,0)');
+          g.fillStyle = grad;
+          g.fillRect(0, 0, size, size);
+        }
+
+        g.globalAlpha = 1;
+        return c;
+      }
+
+      function buildScene() {
+        const s = Math.max(760, Math.min(1320, Math.round(Math.max(W, H) * 1.05)));
+
+        layers = [
+          {
+            tex: makeTexture(baseSeed + 11, {
+              size: s,
+              baseWash: true,
+              palette: [COLORS.bg, COLORS.bg2, COLORS.blue0, COLORS.blue1],
+              strokes: 560,
+              swirls: 120,
+              scratches: 260,
+              haze: 18,
+              widthMin: 1.2,
+              widthMax: 9.5,
+              alphaMin: 0.25,
+              alphaMax: 0.82,
+              loopWidthMin: 1.4,
+              loopWidthMax: 5.4
+            }),
+            vx: 9.5, vy: -6.8,
+            orbitX: 26, orbitY: 16,
+            orbitSpeed: 0.06,
+            scale: 1.04,
+            pulse: 0.024,
+            rotAmplitude: 0.017,
+            rotSpeed: 0.08,
+            alpha: 0.92,
+            blend: 'source-over',
+            phase: 0.3
+          },
+          {
+            tex: makeTexture(baseSeed + 27, {
+              size: s,
+              palette: [COLORS.ink, COLORS.ink2, COLORS.blue0],
+              strokes: 460,
+              swirls: 240,
+              scratches: 180,
+              haze: 8,
+              widthMin: 2.4,
+              widthMax: 11.6,
+              alphaMin: 0.38,
+              alphaMax: 0.98,
+              loopWidthMin: 1.4,
+              loopWidthMax: 5.8
+            }),
+            vx: -14.2, vy: 10.8,
+            orbitX: 20, orbitY: 28,
+            orbitSpeed: 0.09,
+            scale: 1.12,
+            pulse: 0.02,
+            rotAmplitude: -0.024,
+            rotSpeed: 0.05,
+            alpha: 0.88,
+            blend: 'multiply',
+            phase: 1.2
+          },
+          {
+            tex: makeTexture(baseSeed + 51, {
+              size: s,
+              palette: [COLORS.blue0, COLORS.blue1, COLORS.blue2, COLORS.blue3, COLORS.chalk],
+              strokes: 320,
+              swirls: 60,
+              scratches: 180,
+              splatters: 20,
+              widthMin: 0.9,
+              widthMax: 5.1,
+              alphaMin: 0.18,
+              alphaMax: 0.78,
+              dotMin: 1.2,
+              dotMax: 4.8,
+              loopWidthMin: 0.8,
+              loopWidthMax: 3.4,
+              haze: 12
+            }),
+            vx: 18.5, vy: 7.2,
+            orbitX: 22, orbitY: 18,
+            orbitSpeed: 0.11,
+            scale: 1.0,
+            pulse: 0.03,
+            rotAmplitude: 0.022,
+            rotSpeed: 0.12,
+            alpha: 0.64,
+            blend: 'screen',
+            phase: 2.4
+          },
+          {
+            tex: makeTexture(baseSeed + 73, {
+              size: s,
+              palette: [COLORS.yellow, COLORS.red, COLORS.chalk, COLORS.blue2],
+              splatterPalette: [COLORS.yellow, COLORS.red, COLORS.chalk],
+              strokes: 210,
+              swirls: 16,
+              splatters: 56,
+              scratches: 60,
+              widthMin: 0.8,
+              widthMax: 4.4,
+              alphaMin: 0.32,
+              alphaMax: 0.88,
+              dotMin: 1.4,
+              dotMax: 6.4,
+              loopWidthMin: 0.7,
+              loopWidthMax: 2.4
+            }),
+            vx: -16.2, vy: -12.1,
+            orbitX: 24, orbitY: 20,
+            orbitSpeed: 0.14,
+            scale: 1.05,
+            pulse: 0.02,
+            rotAmplitude: -0.015,
+            rotSpeed: 0.09,
+            alpha: 0.7,
+            blend: 'source-over',
+            phase: 4.4
+          },
+          {
+            tex: makeTexture(baseSeed + 97, {
+              size: s,
+              palette: [COLORS.chalk, COLORS.blue2, COLORS.blue3],
+              strokes: 180,
+              swirls: 48,
+              scratches: 160,
+              haze: 10,
+              widthMin: 0.7,
+              widthMax: 3.3,
+              alphaMin: 0.12,
+              alphaMax: 0.46,
+              loopWidthMin: 0.7,
+              loopWidthMax: 2.2
+            }),
+            vx: 7.6, vy: 17.2,
+            orbitX: 18, orbitY: 22,
+            orbitSpeed: 0.07,
+            scale: 1.08,
+            pulse: 0.018,
+            rotAmplitude: 0.01,
+            rotSpeed: 0.06,
+            alpha: 0.42,
+            blend: 'lighter',
+            phase: 3.3
+          },
+          {
+            tex: makeTexture(baseSeed + 133, {
+              size: s,
+              palette: [COLORS.ink, COLORS.ink2, COLORS.blue0, COLORS.red],
+              strokes: 220,
+              swirls: 110,
+              scratches: 110,
+              widthMin: 1.4,
+              widthMax: 7.2,
+              alphaMin: 0.2,
+              alphaMax: 0.74,
+              loopWidthMin: 0.8,
+              loopWidthMax: 3.5,
+              haze: 6
+            }),
+            vx: -6.4, vy: 4.7,
+            orbitX: 30, orbitY: 12,
+            orbitSpeed: 0.05,
+            scale: 0.98,
+            pulse: 0.018,
+            rotAmplitude: -0.011,
+            rotSpeed: 0.04,
+            alpha: 0.36,
+            blend: 'overlay',
+            phase: 5.1
+          }
+        ];
+
+        const rng = mulberry32(baseSeed + 400);
+        traces = [];
+        dust = [];
+        bands = [];
+
+        const traceCount = Math.max(120, Math.round((W * H) / 12000));
+        const traceColors = [COLORS.ink, COLORS.ink2, COLORS.blue0, COLORS.blue1, COLORS.blue2, COLORS.chalk];
+        for (let i = 0; i < traceCount; i++) {
+          traces.push({
+            x: randRange(rng, 0, W),
+            y: randRange(rng, 0, H),
+            length: randRange(rng, Math.min(W, H) * 0.08, Math.min(W, H) * 0.3),
+            amp: randRange(rng, 8, 48),
+            freq: randRange(rng, 0.9, 5.8),
+            speed: randRange(rng, 0.1, 0.9) * (rng() > 0.5 ? 1 : -1),
+            driftX: randRange(rng, -22, 22),
+            driftY: randRange(rng, -22, 22),
+            angle: randRange(rng, 0, TAU),
+            width: randRange(rng, 1.1, 6.6),
+            alpha: randRange(rng, 0.15, 0.75),
+            color: choose(rng, traceColors),
+            phase: randRange(rng, 0, TAU),
+            twist: randRange(rng, -0.55, 0.55)
+          });
+        }
+
+        const bandCount = Math.max(18, Math.round((W * H) / 60000));
+        for (let i = 0; i < bandCount; i++) {
+          bands.push({
+            x: randRange(rng, 0, W),
+            y: randRange(rng, 0, H),
+            width: randRange(rng, Math.min(W, H) * 0.16, Math.min(W, H) * 0.38),
+            height: randRange(rng, Math.min(W, H) * 0.08, Math.min(W, H) * 0.24),
+            angle: randRange(rng, 0, TAU),
+            driftX: randRange(rng, -12, 12),
+            driftY: randRange(rng, -12, 12),
+            phase: randRange(rng, 0, TAU),
+            color: choose(rng, [COLORS.blue0, COLORS.blue1, COLORS.blue2, COLORS.red]),
+            alpha: randRange(rng, 0.025, 0.08)
+          });
+        }
+
+        const dustCount = Math.max(120, Math.round((W * H) / 9000));
+        for (let i = 0; i < dustCount; i++) {
+          dust.push({
+            x: randRange(rng, 0, W),
+            y: randRange(rng, 0, H),
+            driftX: randRange(rng, -14, 14),
+            driftY: randRange(rng, -14, 14),
+            orbit: randRange(rng, 3, 22),
+            speed: randRange(rng, 0.1, 0.8),
+            r: randRange(rng, 0.8, 4.8),
+            phase: randRange(rng, 0, TAU),
+            alpha: randRange(rng, 0.25, 0.9),
+            color: choose(rng, [COLORS.yellow, COLORS.red, COLORS.chalk, COLORS.blue3])
+          });
+        }
+      }
+
+      function resize() {
+        DPR = Math.min(window.devicePixelRatio || 1, 1.75);
+        W = Math.max(1, window.innerWidth);
+        H = Math.max(1, window.innerHeight);
+        canvas.width = Math.round(W * DPR);
+        canvas.height = Math.round(H * DPR);
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        ctx.imageSmoothingEnabled = true;
+        buildScene();
+      }
+
+      function drawTiledLayer(layer, t) {
+        const tex = layer.tex;
+        const tw = tex.width;
+        const th = tex.height;
+        const ox = ((t * layer.vx + Math.cos(t * layer.orbitSpeed + layer.phase) * layer.orbitX) % tw + tw) % tw;
+        const oy = ((t * layer.vy + Math.sin(t * layer.orbitSpeed * 1.17 + layer.phase) * layer.orbitY) % th + th) % th;
+        const pulse = 1 + Math.sin(t * 0.21 + layer.phase) * layer.pulse;
+        const angle = Math.sin(t * layer.rotSpeed + layer.phase) * layer.rotAmplitude;
+
+        ctx.save();
+        ctx.globalAlpha = layer.alpha;
+        ctx.globalCompositeOperation = layer.blend;
+        ctx.translate(W / 2, H / 2);
+        ctx.rotate(angle);
+        ctx.scale(layer.scale * pulse, layer.scale * pulse);
+        ctx.translate(-W / 2, -H / 2);
+
+        const startX = -tw * 2 + ox;
+        const startY = -th * 2 + oy;
+        const endX = W + tw * 2;
+        const endY = H + th * 2;
+
+        for (let y = startY; y < endY; y += th) {
+          for (let x = startX; x < endX; x += tw) {
+            ctx.drawImage(tex, x, y);
+          }
+        }
+        ctx.restore();
+      }
+
+      function drawBands(t) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        for (const b of bands) {
+          const x = ((b.x + t * b.driftX) % (W + 300) + (W + 300)) % (W + 300) - 150;
+          const y = ((b.y + t * b.driftY) % (H + 300) + (H + 300)) % (H + 300) - 150;
+          const angle = b.angle + Math.sin(t * 0.09 + b.phase) * 0.8;
+          const w = b.width * (1 + Math.sin(t * 0.13 + b.phase) * 0.08);
+          const h = b.height * (1 + Math.cos(t * 0.16 + b.phase) * 0.08);
+          const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(w, h));
+          grad.addColorStop(0, b.color);
+          grad.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(angle);
+          ctx.scale(1.2, 0.8);
+          ctx.globalAlpha = b.alpha;
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, w, h, 0, 0, TAU);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.restore();
+      }
+
+      function drawTraces(t) {
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        for (const s of traces) {
+          const cx = ((s.x + t * s.driftX) % (W + 280) + (W + 280)) % (W + 280) - 140;
+          const cy = ((s.y + t * s.driftY) % (H + 280) + (H + 280)) % (H + 280) - 140;
+          const angle = s.angle + Math.sin(t * 0.11 + s.phase) * 1.1;
+          const points = 24;
+          ctx.beginPath();
+          for (let i = 0; i <= points; i++) {
+            const u = i / points - 0.5;
+            const wave = Math.sin(u * TAU * s.freq + t * s.speed + s.phase) * s.amp;
+            const wave2 = Math.cos(u * TAU * (s.freq * 0.63) - t * s.speed * 0.78 + s.phase) * s.amp * 0.38;
+            const along = u * s.length;
+            const bend = s.twist * along * u;
+            const px = along;
+            const py = wave + wave2 + bend;
+            const x = cx + px * Math.cos(angle) - py * Math.sin(angle);
+            const y = cy + px * Math.sin(angle) + py * Math.cos(angle);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.globalAlpha = s.alpha;
+          ctx.globalCompositeOperation = (s.color === COLORS.chalk || s.color === COLORS.blue2) ? 'screen' : 'source-over';
+          ctx.strokeStyle = s.color;
+          ctx.lineWidth = s.width;
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      function drawDust(t) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        for (const d of dust) {
+          const x = ((d.x + t * d.driftX + Math.cos(t * d.speed + d.phase) * d.orbit) % (W + 120) + (W + 120)) % (W + 120) - 60;
+          const y = ((d.y + t * d.driftY + Math.sin(t * d.speed * 1.3 + d.phase) * d.orbit) % (H + 120) + (H + 120)) % (H + 120) - 60;
+          ctx.globalAlpha = d.alpha * (0.65 + 0.35 * Math.sin(t * 0.8 + d.phase));
+          ctx.fillStyle = d.color;
+          ctx.beginPath();
+          ctx.arc(x, y, d.r, 0, TAU);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function frame(now) {
+        const dt = Math.min(40, now - last) / 1000;
+        last = now;
+        time += dt;
+
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1;
+
+        const bg = ctx.createLinearGradient(0, 0, W, H);
+        bg.addColorStop(0, COLORS.bg);
+        bg.addColorStop(0.45, COLORS.bg2);
+        bg.addColorStop(1, COLORS.bg);
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        drawBands(time * 0.7);
+        for (const layer of layers) drawTiledLayer(layer, time);
+        drawTraces(time);
+        drawDust(time);
+
+        requestAnimationFrame(frame);
+      }
+
+      function reseed() {
+        baseSeed = Math.floor(Math.random() * 1e9);
+        buildScene();
+      }
+
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(resize, 120);
+      }, { passive: true });
+
+      let lastTap = 0;
+      window.addEventListener('pointerdown', () => {
+        const now = performance.now();
+        if (now - lastTap < 320) reseed();
+        lastTap = now;
+      }, { passive: true });
+
+      document.addEventListener('visibilitychange', () => {
+        last = performance.now();
+      });
+
+      resize();
+      requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+</html>
