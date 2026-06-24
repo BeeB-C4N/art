@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ff5bc7" />
+  <title>rule10 — chromatic turbulence</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #ff66d0;
+    }
+    body {
+      overscroll-behavior: none;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100dvh;
+    }
+    .glow {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 25% 22%, rgba(255,255,255,.16), rgba(255,255,255,0) 26%),
+        radial-gradient(circle at 72% 61%, rgba(255,255,255,.08), rgba(255,255,255,0) 34%),
+        linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,0) 35%, rgba(255,255,255,.05));
+      mix-blend-mode: screen;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="art" aria-label="rule10 animated abstract artwork"></canvas>
+  <div class="glow" aria-hidden="true"></div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const canvas = document.getElementById('art');
+      const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+      const TAU = Math.PI * 2;
+
+      const PALETTE = {
+        hotPink: '#ff1edb',
+        magenta: '#ff43a7',
+        coral: '#ff5630',
+        scarlet: '#ff1d2c',
+        orange: '#ffb400',
+        gold: '#d4ad42',
+        lime: '#31ff11',
+        mint: '#3cff8d',
+        aqua: '#00c6ff',
+        sky: '#71b8ef',
+        violet: '#a100d6',
+        white: '#ffffff'
+      };
+
+      let W = 0, H = 0, DPR = 1;
+      let time = 0;
+      let last = performance.now();
+      let resizeTimer = 0;
+      let seed = Math.floor(Math.random() * 1e9);
+
+      let ribbons = [];
+      let clouds = [];
+      let sprays = [];
+      let glitters = [];
+      let hazeOrbs = [];
+
+      function mulberry32(a) {
+        return function() {
+          let t = a += 0x6D2B79F5;
+          t = Math.imul(t ^ t >>> 15, t | 1);
+          t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+          return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        };
+      }
+
+      function rr(rng, min, max) { return min + (max - min) * rng(); }
+      function pick(rng, arr) { return arr[Math.floor(rng() * arr.length)]; }
+      function wrap(v, max) { return ((v % max) + max) % max; }
+      function lerp(a, b, t) { return a + (b - a) * t; }
+
+      function generateScene() {
+        const rng = mulberry32(seed);
+        ribbons = [];
+        clouds = [];
+        sprays = [];
+        glitters = [];
+        hazeOrbs = [];
+
+        const ribbonColors = [
+          PALETTE.hotPink, PALETTE.magenta, PALETTE.coral, PALETTE.orange,
+          PALETTE.gold, PALETTE.lime, PALETTE.mint, PALETTE.aqua, PALETTE.sky
+        ];
+
+        const baseCount = Math.max(16, Math.round((W + H) / 85));
+        for (let i = 0; i < baseCount; i++) {
+          ribbons.push({
+            x: rr(rng, -W * 0.15, W * 1.15),
+            y: rr(rng, -H * 0.15, H * 1.15),
+            length: rr(rng, Math.max(W, H) * 0.8, Math.max(W, H) * 1.8),
+            arcSpan: rr(rng, Math.max(W, H) * 0.45, Math.max(W, H) * 1.25),
+            thickness: rr(rng, 28, 96),
+            alpha: rr(rng, 0.12, 0.42),
+            color: pick(rng, ribbonColors),
+            angle: rr(rng, -1.1, 1.1),
+            speed: rr(rng, 3, 16) * (rng() > 0.5 ? 1 : -1),
+            sway: rr(rng, 12, 88),
+            swaySpeed: rr(rng, 0.08, 0.42),
+            phase: rr(rng, 0, TAU),
+            curveA: rr(rng, -0.95, 0.95),
+            curveB: rr(rng, -0.95, 0.95),
+            orbitX: rr(rng, 0, 40),
+            orbitY: rr(rng, 0, 40)
+          });
+        }
+
+        const cloudColors = [
+          PALETTE.hotPink, PALETTE.scarlet, PALETTE.orange, PALETTE.violet,
+          PALETTE.white, PALETTE.aqua, PALETTE.lime, PALETTE.magenta
+        ];
+        const cloudCount = Math.max(40, Math.round((W * H) / 32000));
+        for (let i = 0; i < cloudCount; i++) {
+          const lumpCount = Math.floor(rr(rng, 6, 16));
+          const radius = rr(rng, 34, 118);
+          const blobs = [];
+          for (let j = 0; j < lumpCount; j++) {
+            blobs.push({
+              a: (j / lumpCount) * TAU + rr(rng, -0.35, 0.35),
+              d: radius * rr(rng, 0.08, 0.38),
+              rw: radius * rr(rng, 0.22, 0.55),
+              rh: radius * rr(rng, 0.16, 0.46),
+              rot: rr(rng, 0, TAU),
+              id: j
+            });
+          }
+          clouds.push({
+            x: rr(rng, -60, W + 60),
+            y: rr(rng, -60, H + 60),
+            radius,
+            blobs,
+            color: pick(rng, cloudColors),
+            alpha: rr(rng, 0.48, 0.92),
+            driftX: rr(rng, -14, 14),
+            driftY: rr(rng, -14, 14),
+            wobble: rr(rng, 3, 20),
+            wobbleSpeed: rr(rng, 0.1, 0.6),
+            phase: rr(rng, 0, TAU),
+            tilt: rr(rng, 0, TAU),
+            blurish: rr(rng, 0.2, 0.85)
+          });
+        }
+
+        const sprayColors = [
+          PALETTE.white, PALETTE.orange, PALETTE.lime,
+          PALETTE.violet, PALETTE.aqua, PALETTE.gold
+        ];
+        const sprayCount = Math.max(18, Math.round((W * H) / 65000));
+        for (let i = 0; i < sprayCount; i++) {
+          sprays.push({
+            anchorX: rr(rng, W * 0.08, W * 0.92),
+            anchorY: rr(rng, H * 0.12, H * 0.88),
+            angle: rr(rng, -0.6, 0.6),
+            spread: rr(rng, 120, 420),
+            speed: rr(rng, 8, 24) * (rng() > 0.5 ? 1 : -1),
+            count: Math.floor(rr(rng, 48, 140)),
+            phase: rr(rng, 0, TAU),
+            colors: sprayColors,
+            alpha: rr(rng, 0.45, 0.95)
+          });
+        }
+
+        const glitterCount = Math.max(160, Math.round((W * H) / 8000));
+        for (let i = 0; i < glitterCount; i++) {
+          glitters.push({
+            x: rr(rng, 0, W),
+            y: rr(rng, 0, H),
+            r: rr(rng, 0.8, 4.8),
+            color: pick(rng, [PALETTE.white, PALETTE.orange, PALETTE.lime, PALETTE.violet, PALETTE.aqua]),
+            driftX: rr(rng, -20, 20),
+            driftY: rr(rng, -20, 20),
+            twinkle: rr(rng, 0.4, 1.6),
+            phase: rr(rng, 0, TAU),
+            alpha: rr(rng, 0.22, 0.9)
+          });
+        }
+
+        const orbCount = Math.max(8, Math.round((W * H) / 120000));
+        for (let i = 0; i < orbCount; i++) {
+          hazeOrbs.push({
+            x: rr(rng, 0, W),
+            y: rr(rng, 0, H),
+            r: rr(rng, Math.min(W, H) * 0.12, Math.min(W, H) * 0.28),
+            colorA: pick(rng, [PALETTE.hotPink, PALETTE.orange, PALETTE.aqua, PALETTE.lime]),
+            colorB: pick(rng, [PALETTE.white, PALETTE.magenta, PALETTE.sky]),
+            alpha: rr(rng, 0.06, 0.18),
+            driftX: rr(rng, -8, 8),
+            driftY: rr(rng, -8, 8),
+            phase: rr(rng, 0, TAU)
+          });
+        }
+      }
+
+      function resize() {
+        DPR = Math.min(window.devicePixelRatio || 1, 1.75);
+        W = Math.max(1, window.innerWidth);
+        H = Math.max(1, window.innerHeight);
+        canvas.width = Math.round(W * DPR);
+        canvas.height = Math.round(H * DPR);
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        ctx.imageSmoothingEnabled = true;
+        generateScene();
+      }
+
+      function paintBackground(t) {
+        const bg = ctx.createLinearGradient(0, 0, W, H);
+        bg.addColorStop(0, '#ff66d0');
+        bg.addColorStop(0.22, '#ff4d4d');
+        bg.addColorStop(0.48, '#f4be3b');
+        bg.addColorStop(0.72, '#67b0ef');
+        bg.addColorStop(1, '#ff3fd0');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.save();
+        for (const o of hazeOrbs) {
+          const x = wrap(o.x + t * o.driftX + Math.cos(t * 0.12 + o.phase) * 28, W + o.r * 2) - o.r;
+          const y = wrap(o.y + t * o.driftY + Math.sin(t * 0.16 + o.phase) * 28, H + o.r * 2) - o.r;
+          const g = ctx.createRadialGradient(x, y, 0, x, y, o.r);
+          g.addColorStop(0, o.colorA);
+          g.addColorStop(0.55, o.colorB);
+          g.addColorStop(1, 'rgba(255,255,255,0)');
+          ctx.globalAlpha = o.alpha;
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(x, y, o.r, 0, TAU);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function drawRibbon(r, t, offsetY = 0) {
+        const progress = t * r.speed;
+        const cx = r.x + Math.cos(t * 0.11 + r.phase) * r.orbitX;
+        const cy = r.y + Math.sin(t * 0.09 + r.phase) * r.orbitY + offsetY;
+        const dirX = Math.cos(r.angle);
+        const dirY = Math.sin(r.angle);
+        const nX = -dirY;
+        const nY = dirX;
+
+        ctx.beginPath();
+        const segments = 32;
+        for (let i = 0; i <= segments; i++) {
+          const u = i / segments;
+          const along = (u - 0.5) * r.length;
+          const bend = Math.sin(u * Math.PI + r.phase + t * r.swaySpeed) * r.arcSpan * 0.22;
+          const wave = Math.sin(u * TAU * 2.2 + progress * 0.04) * r.sway;
+          const wave2 = Math.cos(u * TAU * 1.1 + r.phase * 1.7 - progress * 0.03) * r.sway * 0.65;
+          const normal = bend + wave + wave2;
+          const x = cx + dirX * along + nX * normal + nX * Math.sin(u * TAU + r.phase) * r.curveA * 34;
+          const y = cy + dirY * along + nY * normal + nY * Math.cos(u * TAU * 1.2 + r.phase) * r.curveB * 34;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+
+        ctx.strokeStyle = r.color;
+        ctx.lineWidth = r.thickness;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.globalAlpha = r.alpha;
+        ctx.stroke();
+      }
+
+      function paintRibbons(t) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        for (const r of ribbons) {
+          const yShift = ((t * r.speed * 0.4) % (H + r.thickness * 6));
+          drawRibbon(r, t, yShift - H * 0.2 - r.thickness * 2);
+          drawRibbon(r, t, yShift - H * 1.2 - r.thickness * 2);
+          drawRibbon(r, t, yShift + H * 0.8);
+        }
+        ctx.restore();
+      }
+
+      function drawCloud(c, t) {
+        const x = wrap(c.x + t * c.driftX, W + 160) - 80;
+        const y = wrap(c.y + t * c.driftY, H + 160) - 80;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(c.tilt + Math.sin(t * 0.08 + c.phase) * 0.35);
+        ctx.globalAlpha = c.alpha;
+        ctx.fillStyle = c.color;
+
+        for (const b of c.blobs) {
+          const ox = Math.cos(b.a) * b.d + Math.sin(t * c.wobbleSpeed + b.id) * c.wobble;
+          const oy = Math.sin(b.a) * b.d + Math.cos(t * c.wobbleSpeed * 1.2 + b.id) * c.wobble;
+          const rw = b.rw * (1 + c.blurish * 0.18 * Math.sin(t * 0.18 + b.id));
+          const rh = b.rh * (1 + c.blurish * 0.12 * Math.cos(t * 0.15 + b.id));
+          ctx.beginPath();
+          ctx.ellipse(ox, oy, rw, rh, b.rot, 0, TAU);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function paintClouds(t) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-over';
+        for (let i = 0; i < clouds.length; i++) {
+          drawCloud(clouds[i], t);
+        }
+        ctx.restore();
+      }
+
+      function paintSprays(t) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        for (const s of sprays) {
+          for (let i = 0; i < s.count; i++) {
+            const u = i / Math.max(1, s.count - 1);
+            const pulse = Math.sin(t * 0.45 + s.phase + u * 5.8);
+            const along = (u - 0.5) * s.spread + pulse * 14;
+            const x = s.anchorX + Math.cos(s.angle) * along + Math.sin(t * 0.2 + u * 8 + s.phase) * 9;
+            const y = s.anchorY + Math.sin(s.angle) * along + Math.cos(t * 0.18 + u * 5 + s.phase) * 9;
+            const r = 0.8 + (1 - Math.abs(u - 0.5) * 2) * 4.4 + (i % 5 === 0 ? 1.2 : 0);
+            ctx.globalAlpha = s.alpha * (0.35 + 0.65 * Math.sin(t * 0.8 + i * 0.12 + s.phase) ** 2);
+            ctx.fillStyle = s.colors[i % s.colors.length];
+            ctx.beginPath();
+            if (i % 12 === 0) {
+              ctx.ellipse(x, y, r * 2.2, r * 0.7, s.angle + pulse * 0.08, 0, TAU);
+            } else {
+              ctx.arc(x, y, r, 0, TAU);
+            }
+            ctx.fill();
+          }
+        }
+        ctx.restore();
+      }
+
+      function paintGlitters(t) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        for (const g of glitters) {
+          const x = wrap(g.x + t * g.driftX, W + 80) - 40;
+          const y = wrap(g.y + t * g.driftY, H + 80) - 40;
+          const a = g.alpha * (0.45 + 0.55 * Math.sin(t * g.twinkle + g.phase) ** 2);
+          ctx.globalAlpha = a;
+          ctx.fillStyle = g.color;
+          ctx.beginPath();
+          ctx.arc(x, y, g.r, 0, TAU);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function frame(now) {
+        const dt = Math.min(40, now - last) / 1000;
+        last = now;
+        time += dt;
+
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
+
+        paintBackground(time);
+        paintRibbons(time * 28);
+        paintClouds(time * 1.9);
+        paintSprays(time * 1.3);
+        paintGlitters(time * 1.1);
+
+        requestAnimationFrame(frame);
+      }
+
+      function reseed() {
+        seed = Math.floor(Math.random() * 1e9);
+        generateScene();
+      }
+
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(resize, 120);
+      }, { passive: true });
+
+      let lastTap = 0;
+      window.addEventListener('pointerdown', () => {
+        const now = performance.now();
+        if (now - lastTap < 320) reseed();
+        lastTap = now;
+      }, { passive: true });
+
+      document.addEventListener('visibilitychange', () => {
+        last = performance.now();
+      });
+
+      resize();
+      requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+</html>
