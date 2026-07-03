@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ひゃくまんさんメッセージおりがみ｜グッドライフアワード応募調査</title>
+<style>
+:root{
+  --ink:#1f2937;--muted:#6b7280;--paper:#f7f3ea;--card:#fffdf8;
+  --red:#9d2f34;--gold:#b48a3c;--green:#486b57;--blue:#375f78;
+  --line:#ddd4c3;--shadow:0 18px 50px rgba(45,35,20,.13);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:#1d1d1b;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;overflow:hidden}
+a{color:var(--blue);text-underline-offset:3px}
+button{font:inherit}
+#app{height:100vh;display:grid;grid-template-rows:1fr auto}
+.deck{position:relative;overflow:hidden}
+.slide{position:absolute;inset:0;display:none;padding:46px 58px 42px;background:
+linear-gradient(135deg,rgba(180,138,60,.08),transparent 28%),var(--paper);overflow:auto}
+.slide.active{display:block}
+.slide::after{content:"";position:absolute;left:0;top:0;width:12px;height:100%;background:linear-gradient(var(--red),var(--gold))}
+.kicker{font-size:14px;letter-spacing:.14em;color:var(--red);font-weight:800;text-transform:uppercase}
+h1{font-size:46px;line-height:1.12;margin:12px 0 18px;letter-spacing:-.03em}
+h2{font-size:34px;line-height:1.2;margin:8px 0 22px;letter-spacing:-.02em}
+h3{margin:0 0 10px;font-size:20px}
+p{line-height:1.8;margin:8px 0}
+.lead{font-size:22px;line-height:1.65;max-width:1000px}
+.small{font-size:13px;color:var(--muted);line-height:1.65}.note{font-size:14px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.card{background:rgba(255,253,248,.96);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 8px 24px rgba(48,38,22,.06)}
+.card.accent{border-top:6px solid var(--red)}.card.gold{border-top:6px solid var(--gold)}.card.green{border-top:6px solid var(--green)}.card.blue{border-top:6px solid var(--blue)}
+.badge{display:inline-block;padding:5px 10px;border-radius:999px;background:#efe7d7;color:#654e25;font-weight:800;font-size:12px;margin:0 6px 6px 0}
+.bigquote{font-family:serif;font-size:34px;line-height:1.5;color:#3b3124;border-left:8px solid var(--gold);padding-left:24px;margin:28px 0}
+.flow{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:26px 0}.node{background:white;border:2px solid var(--line);padding:16px 20px;border-radius:16px;font-weight:800;min-width:130px;text-align:center}.arrow{font-size:28px;color:var(--gold)}
+.metric{font-size:42px;font-weight:900;color:var(--red)}
+.table{width:100%;border-collapse:collapse;background:#fffdf8;border-radius:16px;overflow:hidden;box-shadow:0 6px 20px rgba(30,20,10,.05)}
+.table th,.table td{padding:13px 14px;border-bottom:1px solid #e9e1d4;vertical-align:top;text-align:left;line-height:1.55}.table th{background:#eee5d5;font-size:13px}.table td{font-size:14px}
+.checklist{padding-left:1.2em}.checklist li{margin:10px 0;line-height:1.6}.checklist li::marker{color:var(--red)}
+.case-title{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}.case-title .pref{font-size:14px;color:var(--muted);font-weight:700}.case-title h2{margin-bottom:4px}
+.sourcebox{margin-top:16px;padding:12px 14px;border:1px dashed #bcae96;background:#fffaf0;border-radius:12px;font-size:13px;line-height:1.65}
+.diagram{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:18px;align-items:center;margin-top:24px}.hub{border-radius:50%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;text-align:center;background:var(--red);color:white;font-weight:900;font-size:22px;box-shadow:var(--shadow);padding:22px}.spokes{display:grid;gap:10px}.spoke{background:white;border:1px solid var(--line);border-radius:14px;padding:13px 16px;font-weight:700}
+.timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.phase{position:relative;background:white;border:1px solid var(--line);border-radius:16px;padding:18px}.phase .num{font-size:36px;font-weight:900;color:var(--gold)}
+.nav{height:58px;background:#11110f;color:white;display:flex;align-items:center;padding:0 18px;gap:12px}.nav button{background:#2a2925;border:1px solid #4b4941;color:white;border-radius:10px;padding:9px 14px;cursor:pointer}.nav button:hover{background:#3a3832}.progress{height:6px;background:#3a3832;flex:1;border-radius:99px;overflow:hidden}.progress>div{height:100%;background:linear-gradient(90deg,var(--red),var(--gold));width:0}.counter{font-variant-numeric:tabular-nums;min-width:72px;text-align:center}.toc a{display:block;padding:8px 0;border-bottom:1px solid #ded5c5;text-decoration:none;color:var(--ink)}
+.hero-mark{font-size:110px;line-height:1;color:rgba(157,47,52,.12);position:absolute;right:70px;bottom:55px;font-weight:900}
+.scorebar{height:14px;background:#e7dfd1;border-radius:99px;overflow:hidden}.scorebar span{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--red))}
+.print-note{display:none}
+@media(max-width:900px){.slide{padding:34px 28px 34px}.grid2,.grid3,.timeline,.diagram{grid-template-columns:1fr}h1{font-size:34px}h2{font-size:28px}.lead{font-size:18px}.nav{height:64px}.hero-mark{display:none}}
+@media print{
+ html,body{overflow:visible;background:white}.nav{display:none}#app{display:block;height:auto}.deck{overflow:visible}.slide{position:relative;display:block!important;page-break-after:always;min-height:100vh;overflow:visible}.print-note{display:block}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <main class="deck" id="deck">
+
+<section class="slide active">
+<div class="kicker">Good Life Award Research Deck / 2026.07</div>
+<h1>「ひゃくまんさんメッセージおりがみ」が<br>グッドライフアワードを取るための調査</h1>
+<p class="lead">他県の先行事例、環境省の評価文脈、地域循環共生圏の考え方をもとに、<b>商品ではなく「思い・資源・資金・関係が循環する仕組み」</b>として応募するための戦略を整理した。</p>
+<div class="flow"><div class="node">折る</div><div class="arrow">→</div><div class="node">書く</div><div class="arrow">→</div><div class="node">渡す</div><div class="arrow">→</div><div class="node">話す</div></div>
+<div class="sourcebox">調査基準日：2026年7月3日。一次資料・自治体公式・環境省資料を優先。外部リンクは各スライドから直接開ける。</div>
+<div class="hero-mark">折</div>
+</section>
+
+<section class="slide">
+<div class="kicker">00 / Executive Summary</div><h2>結論：勝ち筋は「復興応援グッズ」ではない</h2>
+<div class="grid2">
+<div class="card accent"><h3>弱い見せ方</h3><p>ひゃくまんさんを使った、かわいい折り紙商品。売上の一部を能登支援に回す。</p><p class="note">→ 商品説明に留まり、環境・社会・経済の統合性、継続性、広がりが見えにくい。</p></div>
+<div class="card green"><h3>強い見せ方</h3><p><b>県内古紙を再生し、折る・書く・渡すという参加行為を通じて、能登への関心、会話、資金、関係人口を循環させる県民参加型プラットフォーム。</b></p></div>
+</div>
+<div class="bigquote">紙を売るのではなく、<br>能登を思い出す行為を社会に流通させる。</div>
+</section>
+
+<section class="slide">
+<div class="kicker">01 / Award Framework</div><h2>第14回グッドライフアワードの応募条件</h2>
+<div class="grid3">
+<div class="card"><div class="metric">9/13</div><p><b>2026年9月13日（日）応募締切</b></p></div>
+<div class="card"><div class="metric">全国</div><p>企業、学校、NPO、自治体、地域、個人などが対象。</p></div>
+<div class="card"><div class="metric">統合</div><p>「環境と社会によい暮らし」を実現する活動・ビジネスが対象。</p></div>
+</div>
+<p class="lead">第14回は、第6次環境基本計画に位置づけられた<b>地域循環共生圏の創造</b>へつなげることが明示されている。</p>
+<div class="sourcebox">公式：<a target="_blank" href="https://goodlifeaward.env.go.jp/application/">応募要項</a> ／ <a target="_blank" href="https://www.env.go.jp/press/111141_00002.html">環境省 報道発表</a></div>
+</section>
+
+<section class="slide">
+<div class="kicker">02 / What Judges Tend to Value</div><h2>近年の受賞案件に共通する評価ポイント</h2>
+<table class="table"><tr><th>評価されやすい構造</th><th>ひゃくまんさんメッセージおりがみへの翻訳</th></tr>
+<tr><td>環境・社会・経済を同時に良くする</td><td>古紙循環＋復興共感＋地域企業・販売店への経済循環</td></tr>
+<tr><td>未利用資源を価値へ変える</td><td>県内古紙、断裁端材、地域の物語を「贈れる紙」に変換</td></tr>
+<tr><td>多主体の共創</td><td>県・市町・製紙・印刷・小売・学校・福祉・観光・能登団体</td></tr>
+<tr><td>参加しやすく、広げやすい</td><td>330円程度の小さな参加、授業・企業研修・観光体験へ展開</td></tr>
+<tr><td>成果が測れる</td><td>販売数、紙使用量、寄付額、参加者、メッセージ数、再購入、受取後行動</td></tr></table>
+<div class="sourcebox"><a target="_blank" href="https://goodlifeaward.env.go.jp/report/">歴代受賞者一覧</a> ／ <a target="_blank" href="https://www.env.go.jp/press/press_01798.html">第13回受賞結果</a></div>
+</section>
+
+<section class="slide">
+<div class="kicker">03 / Core Concept</div><h2>地域循環共生圏として説明する</h2>
+<div class="diagram">
+<div class="spokes"><div class="spoke">県内古紙・端材</div><div class="spoke">地域キャラクター</div><div class="spoke">能登復興の物語</div></div>
+<div class="hub">ひゃくまんさん<br>メッセージ<br>おりがみ</div>
+<div class="spokes"><div class="spoke">共感・会話</div><div class="spoke">購買・寄付</div><div class="spoke">再訪・関係人口</div></div>
+</div>
+<p class="lead">環境省の定義では、地域資源を活用して環境・経済・社会を良くする事業を生み出し続けることが重要。単発寄付ではなく、循環が続く設計が必要。</p>
+<div class="sourcebox"><a target="_blank" href="https://chiikijunkan.env.go.jp/shiru/">環境省ローカルSDGs「地域循環共生圏を知る」</a> ／ <a target="_blank" href="https://www.env.go.jp/policy/hakusyo/r07/html/hj25010301.html">令和7年版環境白書</a></div>
+</section>
+
+<section class="slide">
+<div class="case-title"><div><div class="kicker">04 / Case Study 1</div><h2>佐賀県佐賀市「木になる紙」</h2><div class="pref">最重要参考事例｜行政調達 × 森林 × 紙の地産地消</div></div><span class="badge">第13回 環境大臣賞</span></div>
+<div class="grid2"><div class="card gold"><h3>仕組み</h3><ul class="checklist"><li>地域の間伐材を紙原料として利用</li><li>佐賀市が小中学校を含む全庁で長期購入</li><li>販売額の一部を森林所有者へ還元</li><li>森林整備、CO₂吸収、地域経済を一つの紙に接続</li></ul></div>
+<div class="card"><h3>応募に効く理由</h3><p>「環境配慮商品を売る」だけでなく、<b>原料調達、行政需要、利益還元、森林保全、地域ブランド</b>が一体化している。</p><p>ひゃくまんさんでも、県庁・学校・観光施設による継続調達が入ると、仕組みの強度が一段上がる。</p></div></div>
+<div class="sourcebox"><a target="_blank" href="https://goodlifeaward.env.go.jp/report/581/">グッドライフアワード受賞紹介</a> ／ <a target="_blank" href="https://www.city.saga.lg.jp/main/81414.html">佐賀市公式「木になる紙」</a></div>
+</section>
+
+<section class="slide">
+<div class="kicker">05 / Learning from Saga</div><h2>佐賀市事例から、そのまま移植できる5要素</h2>
+<div class="grid3"><div class="card"><h3>1. 行政が最初の買い手</h3><p>県庁内、学校、県関係施設で使い、初期需要と信用をつくる。</p></div><div class="card"><h3>2. 還元先を明示</h3><p>1セット当たり何円が、どこへ、何に使われるかを可視化。</p></div><div class="card"><h3>3. 原料の地域性</h3><p>「県内古紙」「能登由来資源」など、紙そのものに地域性を持たせる。</p></div><div class="card"><h3>4. 長期使用</h3><p>一度のキャンペーンではなく、定番品・公的利用へ。</p></div><div class="card"><h3>5. 環境価値の算定</h3><p>古紙使用量、森林資源代替、CO₂、廃棄削減を記録。</p></div><div class="card"><h3>応募文の主語</h3><p>「商品」ではなく「地域の紙資源循環システム」。</p></div></div>
+</section>
+
+<section class="slide">
+<div class="case-title"><div><div class="kicker">06 / Case Study 2</div><h2>広島市「折り鶴に託された思いの昇華」</h2><div class="pref">象徴 × メッセージ × 再生紙 × 教育・観光</div></div><span class="badge">最も近い比較対象</span></div>
+<div class="grid2"><div class="card accent"><h3>行政が定義した「昇華」</h3><p>折り鶴を単に処理・再生するのではなく、平和への思いが別の形で受け継がれ、新たな行動へつながることを重視。</p><ul class="checklist"><li>再生紙利用</li><li>ブランド化</li><li>学校・公民館との連携</li><li>修学旅行生向け体験</li><li>企業CSR参加</li></ul></div>
+<div class="card green"><h3>石川への示唆</h3><p>「折った後、どうなるか」を設計する。</p><p><b>折る → 誰かへ渡す → 能登の話をする → QRで知る → 買う・訪れる・参加する</b></p><p>思いの循環を、回収や再生だけでなく「次の行動」に接続する。</p></div></div>
+<div class="sourcebox"><a target="_blank" href="https://www.city.hiroshima.lg.jp/atomicbomb-peace/1036664/1006055/1026937/1020764.html">広島市「最終とりまとめ」</a> ／ <a target="_blank" href="https://www.city.hiroshima.lg.jp/atomicbomb-peace/1036664/1006055/1020982.html">折り鶴の昇華に取り組む市民への配付</a></div>
+</section>
+
+<section class="slide">
+<div class="kicker">07 / Learning from Hiroshima</div><h2>「思い」を政策資源として扱う</h2>
+<div class="bigquote">物質の循環だけではなく、<br>意味・記憶・願いの循環を設計する。</div>
+<table class="table"><tr><th>広島</th><th>石川での応用</th></tr><tr><td>平和への願い</td><td>能登への思い、復興への応援、地域への愛着</td></tr><tr><td>折り鶴</td><td>ひゃくまんさんメッセージおりがみ</td></tr><tr><td>再生紙・名刺・ワークショップ</td><td>再生紙折り紙、メッセージ展示、学校・観光体験</td></tr><tr><td>修学旅行・企業CSR</td><td>教育旅行、県内企業研修、観光施設、県人会</td></tr><tr><td>「昇華」ブランド</td><td>「能登への思いを折って渡す」共通メッセージ</td></tr></table>
+<div class="sourcebox"><a target="_blank" href="https://www.orizuru-project.jp/">折り鶴の再生・循環プロジェクト</a> ／ <a target="_blank" href="https://dive-hiroshima.com/explore/4167/">観光ワークショップ事例</a></div>
+</section>
+
+<section class="slide">
+<div class="case-title"><div><div class="kicker">08 / Case Study 3</div><h2>福岡県北九州市「KAMIKURU」</h2><div class="pref">古紙回収 × PaperLab × 障害福祉 × 学校 × 百貨店</div></div><span class="badge">多主体共創の教科書</span></div>
+<div class="flow"><div class="node">使用済み用紙</div><div class="arrow">→</div><div class="node">福祉事業所が回収</div><div class="arrow">→</div><div class="node">再生紙化</div><div class="arrow">→</div><div class="node">製品・教育へ</div></div>
+<div class="grid2"><div class="card"><h3>価値の多重化</h3><ul class="checklist"><li>紙資源の地域循環</li><li>障害者の雇用・職域拡大</li><li>学校での環境教育</li><li>自治体・企業・百貨店の参画</li><li>アップサイクル商品の供給</li></ul></div><div class="card blue"><h3>ひゃくまんさんへの応用</h3><p>折り紙の封入・検品・メッセージカード加工・回収・集計などを、福祉事業所や地域団体の仕事として組み込める。</p><p>「紙の環境価値」に「地域雇用」を重ねると、社会性が強くなる。</p></div></div>
+<div class="sourcebox"><a target="_blank" href="https://kamikuru.jp/about.html">KAMIKURUの仕組み</a> ／ <a target="_blank" href="https://kamikuru.jp/report/20211022.html">井筒屋の参画事例</a></div>
+</section>
+
+<section class="slide">
+<div class="kicker">09 / Case Study 4</div><h2>北九州市「紙えこっパー」</h2>
+<div class="grid2"><div><p class="lead">地域で回収した雑がみ・紙パックを地域工場で再生し、地域キャラクターを印刷したトイレットペーパーとして販売。</p><p>キャラクターは装飾ではなく、<b>分別行動を地域の人に覚えてもらうメディア</b>として働いている。</p></div><div class="card gold"><h3>参考になる点</h3><ul class="checklist"><li>地域キャラクターと環境行動の接続</li><li>日用品として継続購入</li><li>回収地と製造地が近い</li><li>行政の環境啓発と商品が一致</li></ul></div></div>
+<div class="sourcebox"><a target="_blank" href="https://www.city.kitakyushu.lg.jp/contents/01100168.html">北九州市公式「資源回収された古紙の行方」</a></div>
+</section>
+
+<section class="slide">
+<div class="case-title"><div><div class="kicker">10 / Case Study 5</div><h2>宮城県「気仙沼ニッティング」</h2><div class="pref">復興支援品から、世界に求められる商品へ</div></div><span class="badge">復興商品のブランド戦略</span></div>
+<div class="grid2"><div class="card accent"><h3>特徴</h3><ul class="checklist"><li>震災後の地域で、編み手の仕事を創出</li><li>安価な支援グッズではなく、高品質・高価格の製品</li><li>作り手の物語と商品価値を一体化</li><li>直販、展示販売、取扱店へ展開</li></ul></div><div class="card"><h3>石川への示唆</h3><p>「応援だから買う」だけでは継続しにくい。</p><p><b>かわいい、贈りたい、使いたい</b>という商品価値を先に成立させ、その購買が結果として復興と地域雇用を支える設計が強い。</p></div></div>
+<div class="sourcebox"><a target="_blank" href="https://www.knitting.co.jp/vision/">気仙沼ニッティングが目指すこと</a> ／ <a target="_blank" href="https://www.knitting.co.jp/story">気仙沼ニッティングの物語</a></div>
+</section>
+
+<section class="slide">
+<div class="case-title"><div><div class="kicker">11 / Case Study 6</div><h2>宮城県「石巻工房」</h2><div class="pref">復旧のDIYから、世界へ広がるデザイン事業へ</div></div><span class="badge">参加行為を価値化</span></div>
+<div class="grid2"><div><p class="lead">震災後、地域住民が自ら生活用品をつくる公共工房として始まり、家具製品、ワークショップ、国際的なデザインブランドへ展開。</p><div class="bigquote">DIYは「一人でやる」ではなく、<br>自分たちで取り戻すこと。</div></div><div class="card green"><h3>ひゃくまんさんへの応用</h3><p>完成品を買うだけでなく、<b>折るという小さな手仕事</b>そのものを復興参加にする。</p><p>ワークショップ、学校授業、企業研修、観光体験へ展開しやすい。</p></div></div>
+<div class="sourcebox"><a target="_blank" href="https://ishinomaki-lab.org/pages/about">石巻工房 About</a></div>
+</section>
+
+<section class="slide">
+<div class="kicker">12 / Case Study 7</div><h2>手紙・メッセージが関係をつくる事例</h2>
+<div class="grid3"><div class="card"><h3>大阪「お手紙、はじめます。」</h3><p>高齢者が言葉や色を選び、中高生が他者の人生に触れる。手紙制作を社会参加に変える。</p><a target="_blank" href="https://eemachi.pref.osaka.lg.jp/academy/detail/?id=otegami">公式ページ</a></div><div class="card"><h3>ホストタウン手紙交流</h3><p>自治体・学校・大使館等が送付先を調整し、子ども同士の国際交流を継続。</p><a target="_blank" href="https://hosttown.jp/tegami/">プロジェクト</a></div><div class="card"><h3>JICA ORIGAMI Friendship</h3><p>折り紙を介し、地域住民と留学生がオンラインで交流。制作行為が会話の媒介になる。</p><a target="_blank" href="https://www.jica.go.jp/domestic/kansai/information/topics/2020/210120_01.html">JICA公式</a></div></div>
+<p class="lead">重要なのは、メッセージの「送り先」「返事」「次の接点」をコーディネートする主体がいること。</p>
+</section>
+
+<section class="slide">
+<div class="kicker">13 / Coordinator Design</div><h2>地域コーディネーターの役割</h2>
+<div class="diagram"><div class="spokes"><div class="spoke">行政：信用・公共調達</div><div class="spoke">企業：製造・販売・CSR</div><div class="spoke">学校：学習・参加</div></div><div class="hub">事務局／<br>コーディネーター</div><div class="spokes"><div class="spoke">能登団体：使途・物語</div><div class="spoke">店舗：接点・説明</div><div class="spoke">住民：折る・渡す</div></div></div>
+<p class="lead">受賞に向けて必要なのは、関係者の名前を並べることではなく、<b>誰が循環を止めないか</b>を示すこと。</p>
+<ul class="checklist"><li>販売・在庫・寄付・成果の一元管理</li><li>参加プログラムの設計</li><li>学校・企業・観光施設への導入</li><li>受取者の声と行動の収集</li><li>年次レポートの発行</li></ul>
+</section>
+
+<section class="slide">
+<div class="kicker">14 / Comparative Matrix</div><h2>他県事例との比較</h2>
+<table class="table"><tr><th>事例</th><th>資源循環</th><th>思いの循環</th><th>雇用・経済</th><th>行政</th><th>教育・参加</th></tr>
+<tr><td>佐賀・木になる紙</td><td>◎</td><td>○</td><td>◎</td><td>◎ 調達</td><td>○</td></tr>
+<tr><td>広島・折り鶴昇華</td><td>◎</td><td>◎</td><td>○</td><td>◎ 方針・先導</td><td>◎</td></tr>
+<tr><td>北九州・KAMIKURU</td><td>◎</td><td>○</td><td>◎ 福祉雇用</td><td>◎ 接続</td><td>◎</td></tr>
+<tr><td>気仙沼ニッティング</td><td>△</td><td>◎</td><td>◎</td><td>△</td><td>○</td></tr>
+<tr><td>石巻工房</td><td>○</td><td>◎</td><td>◎</td><td>○</td><td>◎</td></tr>
+<tr><td><b>ひゃくまんさん案</b></td><td><b>○→◎</b></td><td><b>◎</b></td><td><b>○→◎</b></td><td><b>○→◎</b></td><td><b>◎</b></td></tr></table>
+<p class="note">現状評価は公開情報と企画構想に基づく仮評価。原料・雇用・行政調達・成果測定を実装できれば強化できる。</p>
+</section>
+
+<section class="slide">
+<div class="kicker">15 / Current Strengths</div><h2>ひゃくまんさんメッセージおりがみの強み</h2>
+<div class="grid3"><div class="card accent"><h3>参加障壁が低い</h3><p>少額で購入でき、年齢や場所を問わず参加できる。</p></div><div class="card gold"><h3>行為が残る</h3><p>寄付よりも「折る・書く・渡す」という身体的な記憶が残る。</p></div><div class="card green"><h3>会話を生む</h3><p>受取人に能登や石川の話をする理由が生まれる。</p></div><div class="card"><h3>公式キャラクター</h3><p>県民認知が高く、行政・観光・教育に展開しやすい。</p></div><div class="card blue"><h3>贈答文化との相性</h3><p>メッセージカード、土産、イベント、ノベルティへ応用可能。</p></div><div class="card"><h3>県外へ運ばれる</h3><p>紙が人とともに移動し、関心を県外へ運ぶ。</p></div></div>
+</section>
+
+<section class="slide">
+<div class="kicker">16 / Gaps</div><h2>受賞のために埋めるべき不足</h2>
+<div class="grid2"><div class="card accent"><h3>仕組みの不足</h3><ul class="checklist"><li>寄付先・使途・還元率の明示</li><li>原料の由来と環境効果</li><li>販売後の次の行動導線</li><li>行政・企業・学校との継続契約</li><li>運営主体と役割分担</li></ul></div><div class="card"><h3>データの不足</h3><ul class="checklist"><li>累計販売数・購入地域</li><li>メッセージを書いた割合</li><li>受取人の反応</li><li>寄付・地域還元額</li><li>ワークショップ参加者</li><li>再購入率・紹介率</li></ul></div></div>
+<p class="lead">審査で問われるのは「良さそう」ではなく、<b>この仕組みが実際に何を動かしたか</b>である。</p>
+</section>
+
+<section class="slide">
+<div class="kicker">17 / Recommended Business Model</div><h2>推奨する循環モデル</h2>
+<div class="flow"><div class="node">県内古紙・端材</div><div class="arrow">→</div><div class="node">県内企業で製造</div><div class="arrow">→</div><div class="node">店舗・学校・企業</div><div class="arrow">→</div><div class="node">折る・書く・渡す</div></div>
+<div class="flow"><div class="node">能登を知るQR</div><div class="arrow">→</div><div class="node">寄付・購入・訪問</div><div class="arrow">→</div><div class="node">成果公開</div><div class="arrow">→</div><div class="node">再購入・参加</div></div>
+<div class="grid3"><div class="card"><h3>環境</h3><p>古紙使用量、端材削減、FSC等の認証、地産地消。</p></div><div class="card"><h3>社会</h3><p>福祉事業所、学校、県人会、避難者・被災地との接点。</p></div><div class="card"><h3>経済</h3><p>県内製造、販売店収益、寄付、能登商品の購入・訪問。</p></div></div>
+</section>
+
+<section class="slide">
+<div class="kicker">18 / Experience Programs</div><h2>商品を「参加プログラム」に拡張する</h2>
+<div class="grid3"><div class="card gold"><h3>学校版</h3><p>能登を学ぶ → 折る → メッセージを書く → 家族へ渡す → 家庭で会話。</p></div><div class="card green"><h3>企業版</h3><p>CSR研修 → 社員が制作 → 顧客・取引先へ渡す → 寄付と成果報告。</p></div><div class="card blue"><h3>観光版</h3><p>観光施設で購入・体験 → 旅のメッセージを記入 → 県外へ持ち帰る。</p></div><div class="card"><h3>イベント版</h3><p>一斉制作・展示・交換会。参加数を可視化。</p></div><div class="card"><h3>県人会版</h3><p>全国の石川県人会から、能登へのメッセージを集める。</p></div><div class="card"><h3>海外版</h3><p>折り紙文化を入口に、多言語カードと能登紹介を組み合わせる。</p></div></div>
+</section>
+
+<section class="slide">
+<div class="kicker">19 / KPI</div><h2>応募書類に載せるKPI</h2>
+<table class="table"><tr><th>領域</th><th>最低限</th><th>一段強い指標</th></tr><tr><td>環境</td><td>再生紙使用量、端材使用量</td><td>バージンパルプ代替、廃棄削減、輸送距離</td></tr><tr><td>参加</td><td>販売数、ワークショップ人数</td><td>メッセージ記入率、受取人数、地域別拡散</td></tr><tr><td>社会</td><td>連携団体数、学校数</td><td>福祉雇用時間、交流回数、受取人の行動変化</td></tr><tr><td>経済</td><td>売上、寄付額</td><td>県内発注額、販売店利益、能登商品への送客額</td></tr><tr><td>継続</td><td>実施月数、定番取扱店</td><td>再購入率、行政調達、協賛更新率</td></tr></table>
+<div class="sourcebox">QRアンケートを商品に付け、購入者・受取人の双方からデータを取ると「関係の循環」を数値化できる。</div>
+</section>
+
+<section class="slide">
+<div class="kicker">20 / Roadmap</div><h2>応募締切までの実装ロードマップ</h2>
+<div class="timeline"><div class="phase"><div class="num">1</div><h3>7月上旬</h3><p>応募ストーリー、役割分担、寄付・還元設計を確定。</p></div><div class="phase"><div class="num">2</div><h3>7月中旬</h3><p>QR調査、成果台帳、連携先の同意・コメント収集。</p></div><div class="phase"><div class="num">3</div><h3>8月</h3><p>学校・企業・観光施設で3〜5件の実証。写真と声を蓄積。</p></div><div class="phase"><div class="num">4</div><h3>9月上旬</h3><p>数値、事例、循環図、今後3年の計画を応募書類へ。</p></div></div>
+<p class="lead">実績がまだ小さくても、<b>既に動いている仕組み＋再現可能な拡張計画</b>として示す。</p>
+</section>
+
+<section class="slide">
+<div class="kicker">21 / Application Story</div><h2>応募書類の中心メッセージ案</h2>
+<div class="bigquote">一枚の折り紙が、能登を思う時間を生み、<br>誰かとの会話を生み、地域へ資金と関係を戻していく。</div>
+<p class="lead">「ひゃくまんさんメッセージおりがみ」は、県内の紙資源と石川の象徴を活かし、折る・書く・渡すという誰にでもできる行為から、能登復興への関心と参加を日常に広げる取組である。商品販売にとどまらず、学校、企業、観光、福祉、行政をつなぎ、思い・資源・資金・情報が循環する地域参加の仕組みを目指す。</p>
+</section>
+
+<section class="slide">
+<div class="kicker">22 / Reference Library</div><h2>他県事例・主要参考文献</h2>
+<div class="grid2 toc">
+<div class="card"><h3>環境省・制度</h3><a target="_blank" href="https://goodlifeaward.env.go.jp/application/">第14回グッドライフアワード 応募要項</a><a target="_blank" href="https://goodlifeaward.env.go.jp/report/">歴代受賞者</a><a target="_blank" href="https://chiikijunkan.env.go.jp/">地域循環共生圏ポータル</a><a target="_blank" href="https://www.env.go.jp/policy/hakusyo/r07/html/hj25010301.html">令和7年版環境白書</a></div>
+<div class="card"><h3>紙・折り紙・資源循環</h3><a target="_blank" href="https://goodlifeaward.env.go.jp/report/581/">佐賀「木になる紙」受賞紹介</a><a target="_blank" href="https://www.city.saga.lg.jp/main/81414.html">佐賀市公式</a><a target="_blank" href="https://www.city.hiroshima.lg.jp/atomicbomb-peace/1036664/1006055/1026937/1020764.html">広島市 折り鶴の昇華</a><a target="_blank" href="https://kamikuru.jp/about.html">北九州 KAMIKURU</a><a target="_blank" href="https://www.city.kitakyushu.lg.jp/contents/01100168.html">北九州 紙えこっパー</a></div>
+<div class="card"><h3>復興と商品</h3><a target="_blank" href="https://www.knitting.co.jp/vision/">気仙沼ニッティング</a><a target="_blank" href="https://ishinomaki-lab.org/pages/about">石巻工房</a><a target="_blank" href="https://www.reconstruction.go.jp/10year/ichioshi/index.html">復興庁 イチオシの逸品</a><a target="_blank" href="https://buy-tohoku.jp/about">BUY! TOHOKU</a></div>
+<div class="card"><h3>手紙・交流</h3><a target="_blank" href="https://eemachi.pref.osaka.lg.jp/academy/detail/?id=otegami">大阪 お手紙、はじめます。</a><a target="_blank" href="https://hosttown.jp/tegami/">ホストタウン手紙交流</a><a target="_blank" href="https://www.jica.go.jp/domestic/kansai/information/topics/2020/210120_01.html">JICA ORIGAMI Friendship</a></div>
+</div>
+</section>
+
+<section class="slide">
+<div class="kicker">23 / Final Recommendation</div><h2>最優先でやること</h2>
+<div class="grid3"><div class="card accent"><div class="metric">01</div><h3>循環図を確定</h3><p>紙・資金・思い・情報が、誰から誰へ流れるかを一枚で示す。</p></div><div class="card gold"><div class="metric">02</div><h3>3件だけでも実証</h3><p>学校、企業、観光施設で実施し、写真・参加数・声を取る。</p></div><div class="card green"><div class="metric">03</div><h3>成果を公開</h3><p>寄付額、紙使用量、参加者、受取後の行動を簡潔に公開する。</p></div></div>
+<div class="bigquote">「能登を応援してください」から、<br>「この一枚から、あなたも循環の一員になれる」へ。</div>
+</section>
+
+  </main>
+  <footer class="nav">
+    <button id="prev">← 前へ</button><button id="next">次へ →</button>
+    <div class="progress"><div id="bar"></div></div><div class="counter" id="counter">1 / 24</div>
+    <button onclick="window.print()">印刷 / PDF</button>
+  </footer>
+</div>
+<script>
+const slides=[...document.querySelectorAll('.slide')];let i=0;
+function show(n){i=(n+slides.length)%slides.length;slides.forEach((s,k)=>s.classList.toggle('active',k===i));document.getElementById('counter').textContent=`${i+1} / ${slides.length}`;document.getElementById('bar').style.width=`${(i+1)/slides.length*100}%`;location.hash=`slide-${i+1}`;}
+document.getElementById('prev').onclick=()=>show(i-1);document.getElementById('next').onclick=()=>show(i+1);
+document.addEventListener('keydown',e=>{if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1)}if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();show(i-1)}if(e.key==='Home')show(0);if(e.key==='End')show(slides.length-1)});
+let startX=0;document.addEventListener('touchstart',e=>startX=e.touches[0].clientX,{passive:true});document.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-startX;if(Math.abs(d)>60)show(i+(d<0?1:-1))},{passive:true});
+const h=location.hash.match(/slide-(\d+)/);show(h?Math.min(slides.length-1,Math.max(0,+h[1]-1)):0);
+</script>
+</body></html>
